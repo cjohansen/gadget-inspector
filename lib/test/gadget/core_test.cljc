@@ -141,9 +141,15 @@
              :actions [[:set-path "???" []]]}]))))
 
 (deftest prepare-vector-test
+  (testing "Empty vector"
+    (is (= (vals (:data (sut/prepare-data {:ref (atom {:small-vector []})})))
+           [{:type :vector :val []}])))
+
   (testing "Inlinable vector"
     (is (= (vals (:data (sut/prepare-data {:ref (atom {:small-vector [:a :b :c]})})))
-           [{:type :vector :val [:a :b :c]}])))
+           [{:type :vector :val [{:val ":a" :type :keyword}
+                                 {:val ":b" :type :keyword}
+                                 {:val ":c" :type :keyword}]}])))
 
   (testing "Browsable vector"
     (is (= (-> {:ref (atom {:bigger-vector (->> (range 100)
@@ -200,7 +206,7 @@
                :data
                vals)
            [{:type :jwt
-             :val "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+             :val "\"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...\""
              :actions [[:set-path "App state" [:gadget/JWT]]]}]))))
 
 (deftest get-in*-test

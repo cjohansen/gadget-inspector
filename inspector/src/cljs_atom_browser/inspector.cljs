@@ -13,6 +13,9 @@
 (def code-styles
   {:fontFamily "menlo, lucida console, monospace"})
 
+(defn code [attrs & children]
+  (apply d/code (assoc attrs :style (merge code-styles (:style attrs))) children))
+
 (q/defcomponent Button [{:keys [actions content title]}]
   (d/span {:style {:color "#3424fb"
                    :text-decoration "underline"
@@ -21,28 +24,57 @@
     content))
 
 (q/defcomponent InlineSymbol [s]
-  (d/code {:style (merge code-styles (type-styles (:type s)))}
-    (:val s)))
+  (code {:style (type-styles (:type s))}
+        (:val s)))
+
+(declare ComplexSymbol)
 
 (q/defcomponent InlineMap [m]
-  (apply d/code {:style code-styles}
-         (concat ["{"]
+  (apply code {}
+         (concat [(d/strong {} "{")]
                  (->> (keys m)
                       (sort-by (comp str :val))
-                      (map (fn [k] [(InlineSymbol k) " " (InlineSymbol (m k))]))
+                      (map (fn [k] [(InlineSymbol k) " " (ComplexSymbol (m k))]))
                       (interpose ", ")
                       flatten)
-                 ["}"])))
+                 [(d/strong {} "}")])))
+
+(def brackets
+  {:vector ["[" "]"]
+   :list ["(" ")"]
+   :seq ["(" ")"]
+   :set ["#{" "}"]})
+
+(q/defcomponent InlineCollection [c]
+  (let [[pre post] (brackets (:type c))]
+    (apply
+     d/span {}
+     (concat [(d/strong {} pre)]
+             (interpose " " (map ComplexSymbol (:val c)))
+             [(d/strong {} post)]))))
+
+(q/defcomponent JWT [token]
+  (d/span {}
+    (InlineSymbol {:type :string :val (:val token)})
+    " "
+    (Button {:actions (:actions token)
+             :content "Decode JWT"
+             :title "Decode and browse JSON Web Token"})))
 
 (q/defcomponent ComplexSymbol [sym]
-  (let [content (cond
-                  (= (:type sym) :summary) (d/code {:style (merge code-styles (type-styles (:type sym)))} (:val sym))
-                  (= (:type sym) :map) (InlineMap (:val sym))
-                  :default (d/code {:style (type-styles (:type sym))} (pr-str (:val sym))))]
-    (d/div {}
-      (if-let [actions (:actions sym)]
-        (Button {:actions actions :content content :title (:title sym)})
-        content))))
+  (cond
+    (= (:type sym) :jwt) (JWT sym)
+
+    :default
+    (let [content (cond
+                    (= (:type sym) :summary) (code {:style (type-styles (:type sym))} (:val sym))
+                    (= (:type sym) :map) (InlineMap (:val sym))
+                    (#{:list :seq :vector :set} (:type sym)) (InlineCollection sym)
+                    :default (code {:style (type-styles (:type sym))} (:val sym)))]
+      (d/span {}
+        (if-let [actions (:actions sym)]
+          (Button {:actions actions :content content :title (:title sym)})
+          content)))))
 
 (q/defcomponent MapItem
   "A map entry is one key/value pair, formatted appropriately for their types"
