@@ -117,7 +117,9 @@
 (deftest prepare-set-test
   (testing "Inlinable set"
     (is (= (vals (:data (sut/prepare-data {:ref (atom {:small-set #{:a :b :c}})})))
-           [{:type :set :val #{:a :b :c}}])))
+           [{:type :set :val #{{:type :keyword :val ":a"}
+                               {:type :keyword :val ":b"}
+                               {:type :keyword :val ":c"}}}])))
 
   (testing "Browsable set"
     (is (= (-> {:ref (atom {:bigger-set (->> (range 100)
@@ -165,7 +167,9 @@
 (deftest prepare-vector-test
   (testing "Inlinable list"
     (is (= (vals (:data (sut/prepare-data {:ref (atom {:small-list '(:a :b :c)})})))
-           [{:type :list :val '(:a :b :c)}])))
+           [{:type :list :val '({:val ":a" :type :keyword}
+                                {:val ":b" :type :keyword}
+                                {:val ":c" :type :keyword})}])))
 
   (testing "Browsable list"
     (is (= (-> {:ref (atom {:bigger-list (->> (range 100)
@@ -181,7 +185,9 @@
 (deftest prepare-seq-test
   (testing "Inlinable seq"
     (is (= (vals (:data (sut/prepare-data {:ref (atom {:small-seq (range 3)})})))
-           [{:type :seq :val '(0 1 2)}])))
+           [{:type :seq :val '({:type :number :val "0"}
+                               {:type :number :val "1"}
+                               {:type :number :val "2"})}])))
 
   (testing "Browsable seq"
     (is (= (-> {:ref (atom {:bigger-list (range 400)})}
