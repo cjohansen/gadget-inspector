@@ -1,3 +1,6 @@
 .cpcache
 extension/panel.js
 target
+figwheel-main.edn
+/extension/inspector.css
+lib/.nrepl-port

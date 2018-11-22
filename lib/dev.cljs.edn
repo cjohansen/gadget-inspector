@@ -1,0 +1,4 @@
+{:main gadget.dev
+ :optimizations :none
+ :pretty-print true
+ :source-map true}
