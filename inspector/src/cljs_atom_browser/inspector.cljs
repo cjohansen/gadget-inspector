@@ -2,6 +2,15 @@
   (:require [quiescent.core :as q]
             [quiescent.dom :as d]))
 
+(defn to-clipboard [text]
+  (let [text-area (js/document.createElement "textarea")]
+    (set! (.-textContent text-area) text)
+    (js/document.body.appendChild text-area)
+    (.select text-area)
+    (js/document.execCommand "copy")
+    (.blur text-area)
+    (js/document.body.removeChild text-area)))
+
 (defn- type-styles [t]
   (cond
     (= t :string) {:color "#690"}
@@ -76,12 +85,43 @@
           (Button {:actions actions :content content :title (:title sym)})
           content)))))
 
+(q/defcomponent CopyButton [text]
+  (d/div {:style {:padding "0 5px"}}
+    (d/span {:style {:cursor "pointer"
+                     :border "1px solid #999"
+                     :borderRadius "3px"
+                     :padding "2px 3px"
+                     :background "#f9f9f9"}
+             :title "Copy data to clipboard"
+             :onClick (fn [] (to-clipboard text))}
+      "copy")))
+
+(defn- copy-button [e]
+  (some-> e
+          .-target
+          (.getElementsByClassName "copy-btn")
+          (aget 0)))
+
 (q/defcomponent MapItem
   "A map entry is one key/value pair, formatted appropriately for their types"
   [[k v]]
-  (d/tr {}
+  (d/tr {:onMouseEnter (fn [e]
+                         (when-let [button (copy-button e)]
+                           (set! (.. button -style -opacity) 1)))
+         :onMouseLeave (fn [e]
+                         (when-let [button (copy-button e)]
+                           (set! (.. button -style -opacity) 0)))}
     (d/td {:style {:padding "5px"}} (InlineSymbol k))
-    (d/td {:style {:padding "5px"}} (ComplexSymbol v))))
+    (d/td {:style {:padding "5px"
+                   :position "relative"}}
+      (ComplexSymbol v)
+      (d/div {:style {:opacity 0
+                      :position "absolute"
+                      :right 0
+                      :top 5
+                      :transition "opacity 0.25s"}
+              :className "copy-btn"}
+        (CopyButton (:copyable v))))))
 
 (q/defcomponent MapPath
   "The heading and current path in the map. When browsing nested maps and lists,
@@ -96,9 +136,13 @@
                              (d/strong {} text)))
                          path))))
 
-(q/defcomponent MapBrowser [{:keys [path data]} callback]
+(q/defcomponent MapBrowser [{:keys [path data copyable]} callback]
   (d/div {:style {:marginBottom "10px"}}
-    (MapPath path)
+    (d/div {:style {:display "flex"
+                    :justify-content "space-between"
+                    :align-items "center"}}
+      (MapPath path)
+      (CopyButton copyable))
     (d/table {:style {:borderCollapse "collapse"
                       :width "100%"}}
       (apply d/tbody {} (map MapItem data)))))

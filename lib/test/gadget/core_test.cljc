@@ -239,10 +239,38 @@
 
 (deftest prepare-navigated-data-test
   (testing "Serves up data at path"
-    (is (= (sut/prepare-data {:label "My data"
-                              :path [:key]
-                              :ref (atom {:key {:a 1, :b 2}})})
+    (is (= (-> {:label "My data"
+                :path [:key]
+                :ref (atom {:key {:a 1, :b 2}})}
+               sut/prepare-data
+               (select-keys [:path :data]))
            {:path [{:text "My data" :actions [[:set-path "My data" []]]}
                    {:text ":key"}]
             :data {{:type :keyword :val ":a"} {:val "1" :type :number}
                    {:type :keyword :val ":b"} {:val "2" :type :number}}}))))
+
+(deftest prepare-copyable-test
+  (testing "Prepares data at path for copying"
+    (is (= (-> {:label "My data"
+                :path []
+                :ref (atom {:key {:a 1, :b 2}})}
+               sut/prepare-data
+               :copyable)
+           "{:key {:a 1, :b 2}}"))
+
+    (is (= (-> {:label "My data"
+                :path [:key]
+                :ref (atom {:key {:a 1, :b 2}})}
+               sut/prepare-data
+               :copyable)
+           "{:a 1, :b 2}")))
+
+  (testing "Prepares data for copying for each item"
+    (is (= (->> {:label "My data"
+                 :path []
+                 :ref (atom {:key {:a 1, :b 2}})}
+                sut/prepare-data
+                :data
+                vals
+                (map :copyable))
+           ["{:a 1, :b 2}"]))))
