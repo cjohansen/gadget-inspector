@@ -41,9 +41,8 @@
 (q/defcomponent InlineMap [m]
   (apply code {}
          (concat [(d/strong {} "{")]
-                 (->> (keys m)
-                      (sort-by (comp str :val))
-                      (map (fn [k] [(InlineSymbol k) " " (ComplexSymbol (m k))]))
+                 (->> m
+                      (map (fn [[k v]] [(InlineSymbol k) " " (ComplexSymbol v)]))
                       (interpose ", ")
                       flatten)
                  [(d/strong {} "}")])))
@@ -104,8 +103,9 @@
              :onClick (fn [] (to-clipboard text))}
       "copy")))
 
-(q/defcomponent MapItem
-  "A map entry is one key/value pair, formatted appropriately for their types"
+(q/defcomponent Entry
+  "An entry is one key/value pair (or index/value pair), formatted appropriately
+  for their types"
   [[k v]]
   (d/tr {}
     (d/td {:style {:padding "5px"}} (InlineSymbol k))
@@ -119,10 +119,10 @@
               :className "copy-btn"}
         (CopyButton (:copyable v))))))
 
-(q/defcomponent MapPath
-  "The heading and current path in the map. When browsing nested maps and lists,
-   the path component will display the full path from the root of the map, with
-   navigation options along the way."
+(q/defcomponent DataPath
+  "The heading and current path in the data. When browsing nested maps and lists,
+   the path component will display the full path from the root of the map/seq,
+   with navigation options along the way."
   [path]
   (apply d/p {:style {:padding "0 0 0 5px"}}
          (interpose " "
@@ -132,16 +132,16 @@
                              (d/strong {} text)))
                          path))))
 
-(q/defcomponent MapBrowser [{:keys [path data copyable]} callback]
+(q/defcomponent DataBrowser [{:keys [path data copyable]} callback]
   (d/div {:style {:marginBottom "10px"}}
     (d/div {:style {:display "flex"
                     :justify-content "space-between"
                     :align-items "center"}}
-      (MapPath path)
+      (DataPath path)
       (CopyButton copyable))
     (d/table {:style {:borderCollapse "collapse"
                       :width "100%"}}
-      (apply d/tbody {} (map MapItem data)))))
+      (apply d/tbody {} (map Entry data)))))
 
 (q/defcomponent Inspector [{:keys [atoms]}]
   (d/div {:className "inspector"
@@ -150,4 +150,4 @@
                   :lineHeight "1.5"
                   :color "#333"
                   :textShadow "0 1px 0 rgba(255, 255, 255, 0.6)"}}
-    (map MapBrowser atoms)))
+    (map DataBrowser atoms)))

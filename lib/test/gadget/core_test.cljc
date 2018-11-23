@@ -30,16 +30,15 @@
         :label "My data"}
        sut/prepare-data
        :data
-       keys
-       (map #(select-keys % [:val :type]))
-       set))
+       (map first)
+       (map #(select-keys % [:val :type]))))
 
 (defn prepped-vals [data]
   (->> {:ref (atom data)
         :label "My data"}
        sut/prepare-data
        :data
-       vals
+       (map second)
        (map #(select-keys % [:val :type :constructor :actions]))))
 
 (deftest prepare-data-test
@@ -49,6 +48,7 @@
                           3 3
                           true 4
                           nil 5
+                          :bb 2
                           {:a 2} 6
                           [:a] 7
                           '(:b) 8
@@ -56,18 +56,27 @@
                           'd 10
                           (range 5) 11
                           (range 100) 12})
-           #{{:val ":a" :type :keyword}
-             {:val "\"b\"" :type :string}
-             {:val "3" :type :number}
-             {:val "true" :type :boolean}
-             {:val "nil" :type :nil}
-             {:val "{:a 2}" :type :map}
-             {:val "[:a]" :type :vector}
-             {:val "(:b)" :type :list}
-             {:val "#{:c}" :type :set}
-             {:val "d" :type :symbol}
-             {:val "(0 1 2 3 4 5 6 7 8 9 ...)" :type :seq}
-             {:val "(0 1 2 3 4)" :type :seq}})))
+           [{:val ":a" :type :keyword}
+            {:val ":bb" :type :keyword}
+            {:val "d" :type :symbol}
+            {:val "\"b\"" :type :string}
+            {:val "3" :type :number}
+            {:val "{:a 2}" :type :map}
+            {:val "[:a]" :type :vector}
+            {:val "(:b)" :type :list}
+            {:val "#{:c}" :type :set}
+            {:val "(0 1 2 3 4 5 6 7 8 9 ...)" :type :seq}
+            {:val "(0 1 2 3 4)" :type :seq}
+            {:val "true" :type :boolean}
+            {:val "nil" :type :nil}])))
+
+  (testing "Treats vectors like maps"
+    (is (= (prepped-keys [1 2 3 4 5])
+           [{:val "0" :type :number}
+            {:val "1" :type :number}
+            {:val "2" :type :number}
+            {:val "3" :type :number}
+            {:val "4" :type :number}])))
 
   (testing "Keyword values"
     (is (= (prepped-vals {:a :b})
@@ -100,22 +109,29 @@
 (deftest prepare-maps-test
   (testing "Inlinable map"
     (is (= (prepped-vals {:a {:small "Map"}})
-           [{:type :map :val {{:val ":small" :type :keyword} {:val "\"Map\"" :type :string}}}])))
+           [{:type :map :val [[{:val ":small" :type :keyword} {:val "\"Map\"" :type :string}]]}])))
+
+  (testing "Sorts keys in inlinable map"
+    (is (= (->> (prepped-vals {:a {:small "Map" :another "Key" :tiny "Stuff"}})
+                first
+                :val
+                (map (comp :val first)))
+           [":another" ":small" ":tiny"])))
 
   (testing "Inlinable map with nil"
     (is (= (prepped-vals {:a {:small nil}})
-           [{:type :map :val {{:val ":small" :type :keyword} {:val "nil" :type :nil}}}])))
+           [{:type :map :val [[{:val ":small" :type :keyword} {:val "nil" :type :nil}]]}])))
 
   (testing "Browsable map"
     (is (= (prepped-vals {:a {:slightly "Bigger"
-                              :map "That is inconvenient"
+                              "map" "That is inconvenient"
                               :to "Display on a single line"
-                              :numbers (range 50)}})
+                              'numbers (range 50)}})
            [{:type :map-keys
-             :val [{:val ":map" :type :keyword}
-                   {:val ":numbers" :type :keyword}
-                   {:val ":slightly" :type :keyword}
-                   {:val ":to" :type :keyword}]
+             :val [{:val ":slightly" :type :keyword}
+                   {:val ":to" :type :keyword}
+                   {:val "numbers" :type :symbol}
+                   {:val "\"map\"" :type :string}]
              :actions [[:set-path "My data" [:a]]]}])))
 
   (testing "Browsable map with too many keys"
@@ -135,6 +151,12 @@
 (deftest prepare-set-test
   (testing "Inlinable set"
     (is (= (prepped-vals {:small-set #{:a :b :c}})
+           [{:type :set :val #{{:type :keyword :val ":a"}
+                               {:type :keyword :val ":b"}
+                               {:type :keyword :val ":c"}}}])))
+
+  (testing "Sorts sets"
+    (is (= (prepped-vals {:small-set #{:b :a :c}})
            [{:type :set :val #{{:type :keyword :val ":a"}
                                {:type :keyword :val ":b"}
                                {:type :keyword :val ":c"}}}])))
@@ -201,7 +223,7 @@
 
   (testing "Lazy seq"
     (is (= (prepped-vals {:lazy (map #(keyword (str "Item" %)) (range 10000))})
-           [{:type :summary :val "(1000+ items, click to load 0-1000)"}]))))
+           [{:type :summary :val "(1000+ items, click to load 0-1000)" :actions [[:set-path "My data" [:lazy]]]}]))))
 
 (def token "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c")
 
@@ -210,7 +232,7 @@
     (is (= (prepped-vals {:token token})
            [{:type :jwt
              :val "\"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...\""
-             :actions [[:set-path "App state" [:gadget/JWT]]]}]))))
+             :actions [[:set-path "My data" [:token :gadget/JWT]]]}]))))
 
 (deftest get-in*-test
   (testing "Gets keys from maps"
@@ -243,13 +265,13 @@
                (select-keys [:path :data]))
            {:path [{:text "Some data" :actions [[:set-path "Some data" []]]}
                    {:text ":key"}]
-            :data {{:type :keyword :val ":a"} {:val "1" :type :number :copyable "1"}
-                   {:type :keyword :val ":b"} {:val "2" :type :number :copyable "2"}
-                   {:type :keyword :val ":token"}
-                   {:type :jwt
-                    :val "\"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...\""
-                    :actions [[:set-path "Some data" [:token :gadget/JWT]]]
-                    :copyable (str "\"" token "\"")}}}))))
+            :data [[{:type :keyword :val ":a"} {:val "1" :type :number :copyable "1"}]
+                   [{:type :keyword :val ":b"} {:val "2" :type :number :copyable "2"}]
+                   [{:type :keyword :val ":token"}
+                    {:type :jwt
+                     :val "\"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...\""
+                     :actions [[:set-path "Some data" [:token :gadget/JWT]]]
+                     :copyable (str "\"" token "\"")}]]}))))
 
 (deftest prepare-copyable-test
   (testing "Prepares data at path for copying"
@@ -273,6 +295,6 @@
                  :ref (atom {:key {:a 1, :b 2}})}
                 sut/prepare-data
                 :data
-                vals
+                (map second)
                 (map :copyable))
            ["{:a 1, :b 2}"]))))
