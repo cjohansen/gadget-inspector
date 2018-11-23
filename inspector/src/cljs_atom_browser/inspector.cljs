@@ -73,7 +73,7 @@
   (apply d/span {}
          (flatten
           (concat [(d/strong {} "{")]
-                  (interpose " " (map InlineSymbol (:val k)))
+                  (interpose " " (map ComplexSymbol (:val k)))
                   [(d/strong {} "}")]))))
 
 (q/defcomponent ComplexSymbol [sym]
