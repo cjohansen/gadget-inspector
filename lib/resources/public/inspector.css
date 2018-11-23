@@ -10,3 +10,11 @@ html, body, pre {
 .inspector tr:hover td {
   background: #ebf2fc;
 }
+
+.inspector .copy-btn {
+  opacity: 0;
+}
+
+.inspector tr:hover .copy-btn {
+  opacity: 1;
+}
