@@ -1,11 +1,19 @@
 /*global chrome*/
 
 const connections = {};
+const queue = {};
 
 chrome.runtime.onConnect.addListener(port => {
   const extensionListener = (message, sender, sendResponse) => {
     if (message.name == "init") {
       connections[message.tabId] = port;
+
+      if (queue[message.tabId]) {
+        console.log("Relaying queued messages");
+        while (queue[message.tabId].length > 0) {
+          port.postMessage(queue[message.tabId].shift());
+        }
+      }
     }
   };
 
@@ -29,9 +37,16 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     const tabId = sender.tab.id;
 
     if (tabId in connections) {
+      console.log("Instantly relay message from", sender.tab.id);
       connections[tabId].postMessage(request);
     } else {
-      console.log("Tab not found in connection list.");
+      console.log("Queue message from", sender.tab.id);
+
+      if (!queue[sender.tab.id]) {
+        queue[sender.tab.id] = [];
+      }
+
+      queue[sender.tab.id].push(request);
     }
   } else {
     console.log("sender.tab not defined.");

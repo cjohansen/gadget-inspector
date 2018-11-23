@@ -1,7 +1,10 @@
 /*global chrome*/
 
+const konsole = chrome.extension.getBackgroundPage().console;
 var panelWindow;
-const queue = [];
+var queue = [];
+
+konsole.log("Create dat panel, plz");
 
 chrome.devtools.panels.create(
   "Atoms",
@@ -21,8 +24,6 @@ chrome.devtools.panels.create(
   }
 );
 
-const konsole = chrome.extension.getBackgroundPage().console;
-
 const backgroundPageConnection = chrome.runtime.connect({
   name: "devtools-page"
 });
@@ -33,12 +34,18 @@ backgroundPageConnection.postMessage({
 });
 
 chrome.devtools.network.onNavigated.addListener(url => {
-  panelWindow.receiveMessage({
-    request: {
-      id: "cljs-atom-browser",
-      type: "reset"
-    }
-  });
+  if (panelWindow) {
+    konsole.log("panelWindow??", panelWindow)
+    panelWindow.receiveMessage({
+      request: {
+        id: "cljs-atom-browser",
+        type: "reset"
+      }
+    });
+  } else {
+    konsole.log("Empty queue", queue.length);
+    queue = [];
+  }
 });
 
 backgroundPageConnection.onMessage.addListener((request, sender, sendResponse) => {
