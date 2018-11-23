@@ -132,7 +132,9 @@
                              (d/strong {} text)))
                          path))))
 
-(q/defcomponent DataBrowser [{:keys [path data copyable]} callback]
+(q/defcomponent DataBrowser
+  :keyfn #(-> % :path first :text)
+  [{:keys [path data copyable]} callback]
   (d/div {:style {:marginBottom "10px"}}
     (d/div {:style {:display "flex"
                     :justifyContent "space-between"
