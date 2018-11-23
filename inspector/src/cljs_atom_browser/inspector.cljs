@@ -70,9 +70,17 @@
              :content "Decode JWT"
              :title "Decode and browse JSON Web Token"})))
 
+(q/defcomponent MapKeys [k]
+  (apply d/span {}
+         (flatten
+          (concat [(d/strong {} "{")]
+                  (interpose " " (map InlineSymbol (:val k)))
+                  [(d/strong {} "}")]))))
+
 (q/defcomponent ComplexSymbol [sym]
   (cond
     (= (:type sym) :jwt) (JWT sym)
+    (= (:type sym) :map-keys) (MapKeys sym)
 
     :default
     (let [content (cond
@@ -96,27 +104,15 @@
              :onClick (fn [] (to-clipboard text))}
       "copy")))
 
-(defn- copy-button [e]
-  (some-> e
-          .-target
-          (.getElementsByClassName "copy-btn")
-          (aget 0)))
-
 (q/defcomponent MapItem
   "A map entry is one key/value pair, formatted appropriately for their types"
   [[k v]]
-  (d/tr {:onMouseEnter (fn [e]
-                         (when-let [button (copy-button e)]
-                           (set! (.. button -style -opacity) 1)))
-         :onMouseLeave (fn [e]
-                         (when-let [button (copy-button e)]
-                           (set! (.. button -style -opacity) 0)))}
+  (d/tr {}
     (d/td {:style {:padding "5px"}} (InlineSymbol k))
     (d/td {:style {:padding "5px"
                    :position "relative"}}
       (ComplexSymbol v)
-      (d/div {:style {:opacity 0
-                      :position "absolute"
+      (d/div {:style {:position "absolute"
                       :right 0
                       :top 5
                       :transition "opacity 0.25s"}
