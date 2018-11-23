@@ -4,8 +4,6 @@ const konsole = chrome.extension.getBackgroundPage().console;
 var panelWindow;
 var queue = [];
 
-konsole.log("Create dat panel, plz");
-
 chrome.devtools.panels.create(
   "Atoms",
   "MyPanelIcon.png",
@@ -35,7 +33,6 @@ backgroundPageConnection.postMessage({
 
 chrome.devtools.network.onNavigated.addListener(url => {
   if (panelWindow) {
-    konsole.log("panelWindow??", panelWindow)
     panelWindow.receiveMessage({
       request: {
         id: "cljs-atom-browser",
@@ -49,11 +46,6 @@ chrome.devtools.network.onNavigated.addListener(url => {
 });
 
 backgroundPageConnection.onMessage.addListener((request, sender, sendResponse) => {
-  if (request.id !== "cljs-atom-browser") {
-    konsole.log("Skipping message", request);
-    return;
-  }
-
   if (panelWindow) {
     panelWindow.receiveMessage({request, sender});
   } else {

@@ -33,7 +33,7 @@ chrome.runtime.onConnect.addListener(port => {
 });
 
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
-  if (sender.tab) {
+  if (sender.tab && request.id == "cljs-atom-browser") {
     const tabId = sender.tab.id;
 
     if (tabId in connections) {
@@ -48,8 +48,6 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
 
       queue[sender.tab.id].push(request);
     }
-  } else {
-    console.log("sender.tab not defined.");
   }
 
   return true;
