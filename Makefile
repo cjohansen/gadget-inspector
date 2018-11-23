@@ -1,4 +1,4 @@
-inspector/target/panel.js: inspector/src/**/*
+inspector/target/panel.js: inspector/src/**/* inspector/deps.edn inspector/cljs.edn
 	cd inspector && clojure -A:build-panel
 
 extension/panel.js: inspector/target/panel.js
