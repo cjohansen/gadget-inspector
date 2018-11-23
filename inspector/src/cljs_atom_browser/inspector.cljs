@@ -25,10 +25,13 @@
 (defn code [attrs & children]
   (apply d/code (assoc attrs :style (merge code-styles (:style attrs))) children))
 
+(def button-styles
+  {:color "#3424fb"
+   :text-decoration "underline"
+   :cursor "pointer"})
+
 (q/defcomponent Button [{:keys [actions content title]}]
-  (d/span {:style {:color "#3424fb"
-                   :text-decoration "underline"
-                   :cursor "pointer"}
+  (d/span {:style button-styles
            :title title}
     content))
 
@@ -63,11 +66,8 @@
 
 (q/defcomponent JWT [token]
   (d/span {}
-    (InlineSymbol {:type :string :val (:val token)})
-    " "
-    (Button {:actions (:actions token)
-             :content "Decode JWT"
-             :title "Decode and browse JSON Web Token"})))
+    (d/strong {} "JWT: ")
+    (InlineSymbol {:type :string :val (:val token)})))
 
 (q/defcomponent MapKeys [k]
   (apply d/span {}
@@ -82,15 +82,12 @@
     (= (:type sym) :map-keys) (MapKeys sym)
 
     :default
-    (let [content (cond
-                    (= (:type sym) :summary) (code {:style (type-styles (:type sym))} (:val sym))
-                    (= (:type sym) :map) (InlineMap (:val sym))
-                    (#{:list :seq :vector :set} (:type sym)) (InlineCollection sym)
-                    :default (code {:style (type-styles (:type sym))} (:val sym)))]
-      (d/span {}
-        (if-let [actions (:actions sym)]
-          (Button {:actions actions :content content :title (:title sym)})
-          content)))))
+    (d/span {}
+      (cond
+        (= (:type sym) :summary) (d/strong {:style button-styles} (code {} (:val sym)))
+        (= (:type sym) :map) (InlineMap (:val sym))
+        (#{:list :seq :vector :set} (:type sym)) (InlineCollection sym)
+        :default (code {:style (type-styles (:type sym))} (:val sym))))))
 
 (q/defcomponent CopyButton [text]
   (d/div {:style {:padding "0 5px"}}
@@ -107,8 +104,11 @@
   "An entry is one key/value pair (or index/value pair), formatted appropriately
   for their types"
   [[k v]]
-  (d/tr {}
-    (d/td {:style {:padding "5px"}} (InlineSymbol k))
+  (d/tr {:onClick (when-let [actions (:actions v)]
+                    (fn [e]
+                      (prn "Perform" actions)))
+         :style (when (:actions v) {:cursor "pointer"})}
+    (d/td {:style {:padding "5px" :whiteSpace "nowrap"}} (InlineSymbol k))
     (d/td {:style {:padding "5px"
                    :position "relative"}}
       (ComplexSymbol v)
