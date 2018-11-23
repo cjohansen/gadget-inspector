@@ -232,7 +232,16 @@
     (is (= (prepped-vals {:token token})
            [{:type :jwt
              :val "\"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...\""
-             :actions [[:set-path "My data" [:token :gadget/JWT]]]}]))))
+             :actions [[:set-path "My data" [:token :gadget/JWT]]]}])))
+
+  (testing "Tries to avoid marking non-JWTs as JWTs"
+    (is (= (prepped-vals {:version "1.0.2"})
+           [{:type :string
+             :val "\"1.0.2\""}]))
+
+    (is (= (prepped-vals {:version "no.linkapp.com"})
+           [{:type :string
+             :val "\"no.linkapp.com\""}]))))
 
 (deftest get-in*-test
   (testing "Gets keys from maps"
