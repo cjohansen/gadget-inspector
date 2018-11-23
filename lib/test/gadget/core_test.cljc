@@ -26,7 +26,8 @@
             {:text ":data"}]))))
 
 (defn prepped-keys [data]
-  (->> {:ref (atom data)}
+  (->> {:ref (atom data)
+        :label "My data"}
        sut/prepare-data
        :data
        keys
@@ -34,7 +35,8 @@
        set))
 
 (defn prepped-vals [data]
-  (->> {:ref (atom data)}
+  (->> {:ref (atom data)
+        :label "My data"}
        sut/prepare-data
        :data
        vals
@@ -114,7 +116,7 @@
                    {:val ":numbers" :type :keyword}
                    {:val ":slightly" :type :keyword}
                    {:val ":to" :type :keyword}]
-             :actions [[:set-path "???" []]]}])))
+             :actions [[:set-path "My data" [:a]]]}])))
 
   (testing "Browsable map with too many keys"
     (is (= (prepped-vals {:a (->> 100 range
@@ -122,13 +124,13 @@
                                   (into {}))})
            [{:type :summary
              :val "{100 keys}"
-             :actions [[:set-path "???" []]]}])))
+             :actions [[:set-path "My data" [:a]]]}])))
 
   (testing "Summarizes map with string key in braces"
     (is (= (prepped-vals {:invoices {"5505505" [{:dueamount 100 :kid "00000000" :due-data "2018-11-01T00:00:00Z"} {:dueamount 100 :kid "00000001" :due-data "2018-10-01T00:00:00Z"} {:dueamount 100 :kid "00000002" :due-data "2018-09-01T00:00:00Z"} {:dueamount 100 :kid "00000003" :due-data "2018-08-01T00:00:00Z"}]}})
            [{:val [{:val "\"5505505\"" :type :string}]
              :type :map-keys
-             :actions [[:set-path "???" []]]}]))))
+             :actions [[:set-path "My data" [:invoices]]]}]))))
 
 (deftest prepare-set-test
   (testing "Inlinable set"
@@ -143,14 +145,14 @@
                                            set)})
            [{:type :summary
              :val "#{100 keywords}"
-             :actions [[:set-path "???" []]]}])))
+             :actions [[:set-path "My data" [:bigger-set]]]}])))
 
   (testing "Browsable set with single item"
     (is (= (prepped-vals {:set #{(->> (range 100)
                                       (map #(keyword (str "Item" %))))}})
            [{:type :summary
              :val "#{1 seq}"
-             :actions [[:set-path "???" []]]}]))))
+             :actions [[:set-path "My data" [:set]]]}]))))
 
 (deftest prepare-vector-test
   (testing "Empty vector"
@@ -169,7 +171,7 @@
                                               vec)})
            [{:type :summary
              :val "[100 keywords]"
-             :actions [[:set-path "???" []]]}]))))
+             :actions [[:set-path "My data" [:bigger-vector]]]}]))))
 
 (deftest prepare-vector-test
   (testing "Inlinable list"
@@ -184,7 +186,7 @@
                                             (into '()))})
            [{:type :summary
              :val "(100 keywords)"
-             :actions [[:set-path "???" []]]}]))))
+             :actions [[:set-path "My data" [:bigger-list]]]}]))))
 
 (deftest prepare-seq-test
   (testing "Inlinable seq"
@@ -234,15 +236,20 @@
 
 (deftest prepare-navigated-data-test
   (testing "Serves up data at path"
-    (is (= (-> {:label "My data"
+    (is (= (-> {:label "Some data"
                 :path [:key]
-                :ref (atom {:key {:a 1, :b 2}})}
+                :ref (atom {:key {:a 1, :b 2, :token token}})}
                sut/prepare-data
                (select-keys [:path :data]))
-           {:path [{:text "My data" :actions [[:set-path "My data" []]]}
+           {:path [{:text "Some data" :actions [[:set-path "Some data" []]]}
                    {:text ":key"}]
             :data {{:type :keyword :val ":a"} {:val "1" :type :number :copyable "1"}
-                   {:type :keyword :val ":b"} {:val "2" :type :number :copyable "2"}}}))))
+                   {:type :keyword :val ":b"} {:val "2" :type :number :copyable "2"}
+                   {:type :keyword :val ":token"}
+                   {:type :jwt
+                    :val "\"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...\""
+                    :actions [[:set-path "Some data" [:token :gadget/JWT]]]
+                    :copyable (str "\"" token "\"")}}}))))
 
 (deftest prepare-copyable-test
   (testing "Prepares data at path for copying"
