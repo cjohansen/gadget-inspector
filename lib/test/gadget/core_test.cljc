@@ -15,14 +15,21 @@
             {:text "0" :actions [[:set-path "My data" [:some 0]]]}
             {:text ":stuff"}])))
 
+  (testing "Does not link virtual element when it is the current one"
+    (is (= (:path (sut/prepare-data {:path [:some 0 :token :gadget/JWT]
+                                     :label "My data"}))
+           [{:text "My data" :actions [[:set-path "My data" []]]}
+            {:text ":some" :actions [[:set-path "My data" [:some]]]}
+            {:text "0" :actions [[:set-path "My data" [:some 0]]]}
+            {:text ":token"}])))
+
   (testing "Links virtual path elements"
     (is (= (:path (sut/prepare-data {:path [:some 0 :token :gadget/JWT :data]
                                      :label "My data"}))
            [{:text "My data" :actions [[:set-path "My data" []]]}
             {:text ":some" :actions [[:set-path "My data" [:some]]]}
             {:text "0" :actions [[:set-path "My data" [:some 0]]]}
-            {:text ":token" :actions [[:set-path "My data" [:some 0 :token]]]}
-            {:text "JWT" :actions [[:set-path "My data" [:some 0 :token :gadget/JWT]]]}
+            {:text ":token" :actions [[:set-path "My data" [:some 0 :token :gadget/JWT]]]}
             {:text ":data"}]))))
 
 (defn prepped-keys [data]
@@ -195,7 +202,7 @@
              :val "[100 keywords]"
              :actions [[:set-path "My data" [:bigger-vector]]]}]))))
 
-(deftest prepare-vector-test
+(deftest prepare-list-test
   (testing "Inlinable list"
     (is (= (prepped-vals {:small-list '(:a :b :c)})
            [{:type :list :val '({:val ":a" :type :keyword}
@@ -279,7 +286,7 @@
                    [{:type :keyword :val ":token"}
                     {:type :jwt
                      :val "\"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...\""
-                     :actions [[:set-path "Some data" [:token :gadget/JWT]]]
+                     :actions [[:set-path "Some data" [:key :token :gadget/JWT]]]
                      :copyable (str "\"" token "\"")}]]}))))
 
 (deftest prepare-copyable-test

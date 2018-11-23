@@ -1,6 +1,11 @@
 (ns cljs-atom-browser.inspector
-  (:require [quiescent.core :as q]
+  (:require [cljs-atom-browser.actions :as actions]
+            [quiescent.core :as q]
             [quiescent.dom :as d]))
+
+(defn trigger-actions [actions]
+  (doseq [[action & args] actions]
+    (actions/exec-action (pr-str {:action action :args args}))))
 
 (defn to-clipboard [text]
   (let [text-area (js/document.createElement "textarea")]
@@ -32,7 +37,8 @@
 
 (q/defcomponent Button [{:keys [actions content title]}]
   (d/span {:style button-styles
-           :title title}
+           :title title
+           :onClick #(trigger-actions actions)}
     content))
 
 (q/defcomponent InlineSymbol [s]
@@ -106,7 +112,7 @@
   [[k v]]
   (d/tr {:onClick (when-let [actions (:actions v)]
                     (fn [e]
-                      (prn "Perform" actions)))
+                      (trigger-actions actions)))
          :style (when (:actions v) {:cursor "pointer"})}
     (d/td {:style {:padding "5px" :whiteSpace "nowrap"}} (InlineSymbol k))
     (d/td {:style {:padding "5px"
