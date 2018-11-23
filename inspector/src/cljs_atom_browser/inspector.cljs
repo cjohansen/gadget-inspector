@@ -27,7 +27,7 @@
 
 (def button-styles
   {:color "#3424fb"
-   :text-decoration "underline"
+   :textDecoration "underline"
    :cursor "pointer"})
 
 (q/defcomponent Button [{:keys [actions content title]}]
@@ -135,8 +135,8 @@
 (q/defcomponent DataBrowser [{:keys [path data copyable]} callback]
   (d/div {:style {:marginBottom "10px"}}
     (d/div {:style {:display "flex"
-                    :justify-content "space-between"
-                    :align-items "center"}}
+                    :justifyContent "space-between"
+                    :alignItems "center"}}
       (DataPath path)
       (CopyButton copyable))
     (d/table {:style {:borderCollapse "collapse"
