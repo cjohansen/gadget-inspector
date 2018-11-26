@@ -108,7 +108,7 @@
                     (fn [e]
                       (trigger-actions (:go actions))))
          :style (when (:actions v) {:cursor "pointer"})}
-    (d/td {:style {:padding "5px" :whiteSpace "nowrap"}} (InlineSymbol k))
+    (d/td {:style {:padding "5px" :whiteSpace "nowrap" :minWidth "200px"}} (InlineSymbol k))
     (d/td {:style {:padding "5px"
                    :position "relative"}}
       (ComplexSymbol v)
@@ -132,18 +132,22 @@
                              (d/strong {} text)))
                          path))))
 
-(q/defcomponent DataBrowser
-  :keyfn #(-> % :path first :text)
-  [{:keys [path data actions]} callback]
-  (d/div {:style {:marginBottom "10px"}}
-    (d/div {:style {:display "flex"
-                    :justifyContent "space-between"
-                    :alignItems "center"}}
-      (DataPath path)
-      (CopyButton (:copy actions)))
-    (d/table {:style {:borderCollapse "collapse"
-                      :width "100%"}}
-      (apply d/tbody {} (map Entry data)))))
+(q/defcomponent Header
+  :keyfn #(str (-> % :path first :text) "-header")
+  [{:keys [path actions]} callback]
+  (d/thead {}
+    (d/tr {}
+      (d/td {:colSpan 2}
+        (d/div {:style {:display "flex"
+                        :justifyContent "space-between"
+                        :alignItems "center"}}
+          (DataPath path)
+          (CopyButton (:copy actions)))))))
+
+(q/defcomponent Browser
+  :keyfn #(str (-> % :path first :text) "-browser")
+  [{:keys [data]} callback]
+  (apply d/tbody {} (map Entry data)))
 
 (q/defcomponent Inspector [{:keys [atoms]}]
   (d/div {:className "inspector"
@@ -152,4 +156,8 @@
                   :lineHeight "1.5"
                   :color "#333"
                   :textShadow "0 1px 0 rgba(255, 255, 255, 0.6)"}}
-    (map DataBrowser atoms)))
+    (d/table {:style {:borderCollapse "collapse"
+                      :width "100%"}}
+      (mapcat vector
+              (map Header atoms)
+              (map Browser atoms)))))

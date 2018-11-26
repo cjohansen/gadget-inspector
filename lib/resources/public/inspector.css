@@ -3,7 +3,7 @@ html, body, pre {
   margin: 0;
 }
 
-.inspector tr:nth-child(2n + 1) td {
+.inspector tbody tr:nth-child(2n + 1) td {
   background: #f5f5f5;
 }
 
