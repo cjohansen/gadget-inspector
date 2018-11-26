@@ -9,7 +9,7 @@ chrome.runtime.onConnect.addListener(port => {
       connections[message.tabId] = port;
 
       if (queue[message.tabId]) {
-        console.log("Relaying queued messages");
+        console.log("Relaying %d queued messages", queue[message.tabId].length);
         while (queue[message.tabId].length > 0) {
           port.postMessage(queue[message.tabId].shift());
         }
@@ -41,12 +41,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
       connections[tabId].postMessage(request);
     } else {
       console.log("Queue message from", sender.tab.id);
-
-      if (!queue[sender.tab.id]) {
-        queue[sender.tab.id] = [];
-      }
-
-      queue[sender.tab.id].push(request);
+      queue[sender.tab.id] = [request];
     }
   }
 
