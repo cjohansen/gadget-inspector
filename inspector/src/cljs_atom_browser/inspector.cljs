@@ -7,15 +7,6 @@
   (doseq [[action & args] actions]
     (actions/exec-action (pr-str {:action action :args args}))))
 
-(defn to-clipboard [text]
-  (let [text-area (js/document.createElement "textarea")]
-    (set! (.-textContent text-area) text)
-    (js/document.body.appendChild text-area)
-    (.select text-area)
-    (js/document.execCommand "copy")
-    (.blur text-area)
-    (js/document.body.removeChild text-area)))
-
 (defn- type-styles [t]
   (cond
     (= t :string) {:color "#690"}
@@ -95,7 +86,7 @@
         (#{:list :seq :vector :set} (:type sym)) (InlineCollection sym)
         :default (code {:style (type-styles (:type sym))} (:val sym))))))
 
-(q/defcomponent CopyButton [text]
+(q/defcomponent CopyButton [actions]
   (d/div {:style {:padding "0 5px"}}
     (d/span {:style {:cursor "pointer"
                      :border "1px solid #999"
@@ -103,7 +94,10 @@
                      :padding "2px 3px"
                      :background "#f9f9f9"}
              :title "Copy data to clipboard"
-             :onClick (fn [] (to-clipboard text))}
+             :onClick (fn [e]
+                        (.preventDefault e)
+                        (.stopPropagation e)
+                        (trigger-actions actions))}
       "copy")))
 
 (q/defcomponent Entry
@@ -112,7 +106,7 @@
   [[k v]]
   (d/tr {:onClick (when-let [actions (:actions v)]
                     (fn [e]
-                      (trigger-actions actions)))
+                      (trigger-actions (:go actions))))
          :style (when (:actions v) {:cursor "pointer"})}
     (d/td {:style {:padding "5px" :whiteSpace "nowrap"}} (InlineSymbol k))
     (d/td {:style {:padding "5px"
@@ -123,7 +117,7 @@
                       :top 5
                       :transition "opacity 0.25s"}
               :className "copy-btn"}
-        (CopyButton (:copyable v))))))
+        (CopyButton (-> v :actions :copy))))))
 
 (q/defcomponent DataPath
   "The heading and current path in the data. When browsing nested maps and lists,
@@ -134,19 +128,19 @@
          (interpose " "
                     (map (fn [{:keys [text actions]}]
                            (if actions
-                             (Button {:actions actions :content text})
+                             (Button {:actions (:go actions) :content text})
                              (d/strong {} text)))
                          path))))
 
 (q/defcomponent DataBrowser
   :keyfn #(-> % :path first :text)
-  [{:keys [path data copyable]} callback]
+  [{:keys [path data actions]} callback]
   (d/div {:style {:marginBottom "10px"}}
     (d/div {:style {:display "flex"
                     :justifyContent "space-between"
                     :alignItems "center"}}
       (DataPath path)
-      (CopyButton copyable))
+      (CopyButton (:copy actions)))
     (d/table {:style {:borderCollapse "collapse"
                       :width "100%"}}
       (apply d/tbody {} (map Entry data)))))

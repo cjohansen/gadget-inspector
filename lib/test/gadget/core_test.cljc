@@ -10,26 +10,26 @@
 
   (testing "Links earlier path elements"
     (is (= (:path (sut/prepare-data {:path [:some 0 :stuff] :label "My data"}))
-           [{:text "My data" :actions [[:set-path "My data" []]]}
-            {:text ":some" :actions [[:set-path "My data" [:some]]]}
-            {:text "0" :actions [[:set-path "My data" [:some 0]]]}
+           [{:text "My data" :actions {:go [[:set-path "My data" []]]}}
+            {:text ":some" :actions {:go [[:set-path "My data" [:some]]]}}
+            {:text "0" :actions {:go [[:set-path "My data" [:some 0]]]}}
             {:text ":stuff"}])))
 
   (testing "Does not link virtual element when it is the current one"
     (is (= (:path (sut/prepare-data {:path [:some 0 :token :gadget/JWT]
                                      :label "My data"}))
-           [{:text "My data" :actions [[:set-path "My data" []]]}
-            {:text ":some" :actions [[:set-path "My data" [:some]]]}
-            {:text "0" :actions [[:set-path "My data" [:some 0]]]}
+           [{:text "My data" :actions {:go [[:set-path "My data" []]]}}
+            {:text ":some" :actions {:go [[:set-path "My data" [:some]]]}}
+            {:text "0" :actions {:go [[:set-path "My data" [:some 0]]]}}
             {:text ":token"}])))
 
   (testing "Links virtual path elements"
     (is (= (:path (sut/prepare-data {:path [:some 0 :token :gadget/JWT :data]
                                      :label "My data"}))
-           [{:text "My data" :actions [[:set-path "My data" []]]}
-            {:text ":some" :actions [[:set-path "My data" [:some]]]}
-            {:text "0" :actions [[:set-path "My data" [:some 0]]]}
-            {:text ":token" :actions [[:set-path "My data" [:some 0 :token :gadget/JWT]]]}
+           [{:text "My data" :actions {:go [[:set-path "My data" []]]}}
+            {:text ":some" :actions {:go [[:set-path "My data" [:some]]]}}
+            {:text "0" :actions {:go [[:set-path "My data" [:some 0]]]}}
+            {:text ":token" :actions {:go [[:set-path "My data" [:some 0 :token :gadget/JWT]]]}}
             {:text ":data"}]))))
 
 (defn prepped-keys [data]
@@ -87,36 +87,53 @@
 
   (testing "Keyword values"
     (is (= (prepped-vals {:a :b})
-           [{:val ":b" :type :keyword}])))
+           [{:val ":b"
+             :type :keyword
+             :actions {:copy [[:copy-to-clipboard "My data" [:a]]]}}])))
 
   (testing "String values"
     (is (= (prepped-vals {:a "b"})
-           [{:val "\"b\"" :type :string}])))
+           [{:val "\"b\""
+             :type :string
+             :actions {:copy [[:copy-to-clipboard "My data" [:a]]]}}])))
 
   (testing "Number values"
     (is (= (prepped-vals {:a 2})
-           [{:val "2" :type :number}])))
+           [{:val "2"
+             :type :number
+             :actions {:copy [[:copy-to-clipboard "My data" [:a]]]}}])))
 
   (testing "Boolean values"
     (is (= (prepped-vals {:a true})
-           [{:val "true" :type :boolean}])))
+           [{:val "true"
+             :type :boolean
+             :actions {:copy [[:copy-to-clipboard "My data" [:a]]]}}])))
 
   (testing "nil values"
     (is (= (prepped-vals {:a nil})
-           [{:val "nil" :type :nil}])))
+           [{:val "nil"
+             :type :nil
+             :actions {:copy [[:copy-to-clipboard "My data" [:a]]]}}])))
 
   (testing "Symbol values"
     (is (= (prepped-vals {:a 'Symbolic})
-           [{:val "Symbolic" :type :symbol}])))
+           [{:val "Symbolic"
+             :type :symbol
+             :actions {:copy [[:copy-to-clipboard "My data" [:a]]]}}])))
 
   #?(:cljs (testing "JavaScript object values"
              (is (= (prepped-vals {:a (js/Map.)})
-                    [{:val "object[Map]" :type :object :constructor "Map"}])))))
+                    [{:val "object[Map]"
+                      :type :object
+                      :constructor "Map"
+                      :actions {:copy [[:copy-to-clipboard "My data" [:a]]]}}])))))
 
 (deftest prepare-maps-test
   (testing "Inlinable map"
     (is (= (prepped-vals {:a {:small "Map"}})
-           [{:type :map :val [[{:val ":small" :type :keyword} {:val "\"Map\"" :type :string}]]}])))
+           [{:type :map
+             :val [[{:val ":small" :type :keyword} {:val "\"Map\"" :type :string}]]
+             :actions {:copy [[:copy-to-clipboard "My data" [:a]]]}}])))
 
   (testing "Sorts keys in inlinable map"
     (is (= (->> (prepped-vals {:a {:small "Map" :another "Key" :tiny "Stuff"}})
@@ -127,7 +144,9 @@
 
   (testing "Inlinable map with nil"
     (is (= (prepped-vals {:a {:small nil}})
-           [{:type :map :val [[{:val ":small" :type :keyword} {:val "nil" :type :nil}]]}])))
+           [{:type :map
+             :val [[{:val ":small" :type :keyword} {:val "nil" :type :nil}]]
+             :actions {:copy [[:copy-to-clipboard "My data" [:a]]]}}])))
 
   (testing "Browsable map"
     (is (= (prepped-vals {:a {:slightly "Bigger"
@@ -139,7 +158,8 @@
                    {:val ":to" :type :keyword}
                    {:val "numbers" :type :symbol}
                    {:val "\"map\"" :type :string}]
-             :actions [[:set-path "My data" [:a]]]}])))
+             :actions {:go [[:set-path "My data" [:a]]]
+                       :copy [[:copy-to-clipboard "My data" [:a]]]}}])))
 
   (testing "Browsable map with too many keys"
     (is (= (prepped-vals {:a (->> 100 range
@@ -147,26 +167,32 @@
                                   (into {}))})
            [{:type :summary
              :val "{100 keys}"
-             :actions [[:set-path "My data" [:a]]]}])))
+             :actions {:go [[:set-path "My data" [:a]]]
+                       :copy [[:copy-to-clipboard "My data" [:a]]]}}])))
 
   (testing "Summarizes map with string key in braces"
     (is (= (prepped-vals {:invoices {"5505505" [{:dueamount 100 :kid "00000000" :due-data "2018-11-01T00:00:00Z"} {:dueamount 100 :kid "00000001" :due-data "2018-10-01T00:00:00Z"} {:dueamount 100 :kid "00000002" :due-data "2018-09-01T00:00:00Z"} {:dueamount 100 :kid "00000003" :due-data "2018-08-01T00:00:00Z"}]}})
            [{:val [{:val "\"5505505\"" :type :string}]
              :type :map-keys
-             :actions [[:set-path "My data" [:invoices]]]}]))))
+             :actions {:go [[:set-path "My data" [:invoices]]]
+                       :copy [[:copy-to-clipboard "My data" [:invoices]]]}}]))))
 
 (deftest prepare-set-test
   (testing "Inlinable set"
     (is (= (prepped-vals {:small-set #{:a :b :c}})
-           [{:type :set :val #{{:type :keyword :val ":a"}
-                               {:type :keyword :val ":b"}
-                               {:type :keyword :val ":c"}}}])))
+           [{:type :set
+             :actions {:copy [[:copy-to-clipboard "My data" [:small-set]]]}
+             :val #{{:type :keyword :val ":a"}
+                    {:type :keyword :val ":b"}
+                    {:type :keyword :val ":c"}}}])))
 
   (testing "Sorts sets"
     (is (= (prepped-vals {:small-set #{:b :a :c}})
-           [{:type :set :val #{{:type :keyword :val ":a"}
-                               {:type :keyword :val ":b"}
-                               {:type :keyword :val ":c"}}}])))
+           [{:type :set
+             :actions {:copy [[:copy-to-clipboard "My data" [:small-set]]]}
+             :val #{{:type :keyword :val ":a"}
+                    {:type :keyword :val ":b"}
+                    {:type :keyword :val ":c"}}}])))
 
   (testing "Browsable set"
     (is (= (prepped-vals {:bigger-set (->> (range 100)
@@ -174,25 +200,31 @@
                                            set)})
            [{:type :summary
              :val "#{100 keywords}"
-             :actions [[:set-path "My data" [:bigger-set]]]}])))
+             :actions {:go [[:set-path "My data" [:bigger-set]]]
+                       :copy [[:copy-to-clipboard "My data" [:bigger-set]]]}}])))
 
   (testing "Browsable set with single item"
     (is (= (prepped-vals {:set #{(->> (range 100)
                                       (map #(keyword (str "Item" %))))}})
            [{:type :summary
              :val "#{1 seq}"
-             :actions [[:set-path "My data" [:set]]]}]))))
+             :actions {:go [[:set-path "My data" [:set]]]
+                       :copy [[:copy-to-clipboard "My data" [:set]]]}}]))))
 
 (deftest prepare-vector-test
   (testing "Empty vector"
     (is (= (prepped-vals {:small-vector []})
-           [{:type :vector :val []}])))
+           [{:type :vector
+             :actions {:copy [[:copy-to-clipboard "My data" [:small-vector]]]}
+             :val []}])))
 
   (testing "Inlinable vector"
     (is (= (prepped-vals {:small-vector [:a :b :c]})
-           [{:type :vector :val [{:val ":a" :type :keyword}
-                                 {:val ":b" :type :keyword}
-                                 {:val ":c" :type :keyword}]}])))
+           [{:type :vector
+             :actions {:copy [[:copy-to-clipboard "My data" [:small-vector]]]}
+             :val [{:val ":a" :type :keyword}
+                   {:val ":b" :type :keyword}
+                   {:val ":c" :type :keyword}]}])))
 
   (testing "Browsable vector"
     (is (= (prepped-vals {:bigger-vector (->> (range 100)
@@ -200,14 +232,17 @@
                                               vec)})
            [{:type :summary
              :val "[100 keywords]"
-             :actions [[:set-path "My data" [:bigger-vector]]]}]))))
+             :actions {:go [[:set-path "My data" [:bigger-vector]]]
+                       :copy [[:copy-to-clipboard "My data" [:bigger-vector]]]}}]))))
 
 (deftest prepare-list-test
   (testing "Inlinable list"
     (is (= (prepped-vals {:small-list '(:a :b :c)})
-           [{:type :list :val '({:val ":a" :type :keyword}
-                                {:val ":b" :type :keyword}
-                                {:val ":c" :type :keyword})}])))
+           [{:type :list
+             :actions {:copy [[:copy-to-clipboard "My data" [:small-list]]]}
+             :val '({:val ":a" :type :keyword}
+                    {:val ":b" :type :keyword}
+                    {:val ":c" :type :keyword})}])))
 
   (testing "Browsable list"
     (is (= (prepped-vals {:bigger-list (->> (range 100)
@@ -215,22 +250,30 @@
                                             (into '()))})
            [{:type :summary
              :val "(100 keywords)"
-             :actions [[:set-path "My data" [:bigger-list]]]}]))))
+             :actions {:go [[:set-path "My data" [:bigger-list]]]
+                       :copy [[:copy-to-clipboard "My data" [:bigger-list]]]}}]))))
 
 (deftest prepare-seq-test
   (testing "Inlinable seq"
     (is (= (prepped-vals {:small-seq (range 3)})
-           [{:type :seq :val '({:type :number :val "0"}
-                               {:type :number :val "1"}
-                               {:type :number :val "2"})}])))
+           [{:type :seq
+             :actions {:copy [[:copy-to-clipboard "My data" [:small-seq]]]}
+             :val '({:type :number :val "0"}
+                    {:type :number :val "1"}
+                    {:type :number :val "2"})}])))
 
   (testing "Browsable seq"
     (is (= (prepped-vals {:bigger-list (range 400)})
-           [{:type :summary :val "(400 numbers)"}])))
+           [{:type :summary
+             :actions {:copy [[:copy-to-clipboard "My data" [:bigger-list]]]}
+             :val "(400 numbers)"}])))
 
   (testing "Lazy seq"
     (is (= (prepped-vals {:lazy (map #(keyword (str "Item" %)) (range 10000))})
-           [{:type :summary :val "(1000+ items, click to load 0-1000)" :actions [[:set-path "My data" [:lazy]]]}]))))
+           [{:type :summary
+             :val "(1000+ items, click to load 0-1000)"
+             :actions {:go [[:set-path "My data" [:lazy]]]
+                       :copy [[:copy-to-clipboard "My data" [:lazy]]]}}]))))
 
 (def token "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c")
 
@@ -239,38 +282,19 @@
     (is (= (prepped-vals {:token token})
            [{:type :jwt
              :val "\"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...\""
-             :actions [[:set-path "My data" [:token :gadget/JWT]]]}])))
+             :actions {:go [[:set-path "My data" [:token :gadget/JWT]]]
+                       :copy [[:copy-to-clipboard "My data" [:token]]]}}])))
 
   (testing "Tries to avoid marking non-JWTs as JWTs"
     (is (= (prepped-vals {:version "1.0.2"})
            [{:type :string
+             :actions {:copy [[:copy-to-clipboard "My data" [:version]]]}
              :val "\"1.0.2\""}]))
 
     (is (= (prepped-vals {:version "no.linkapp.com"})
            [{:type :string
+             :actions {:copy [[:copy-to-clipboard "My data" [:version]]]}
              :val "\"no.linkapp.com\""}]))))
-
-(deftest get-in*-test
-  (testing "Gets keys from maps"
-    (is (= (sut/get-in* {:a "Banana"} [:a]) "Banana"))
-    (is (= (sut/get-in* {:a {:b "Banana"}} [:a :b]) "Banana"))
-    (is (= (sut/get-in* {:a {:b {"Banana" 2}}} [:a :b "Banana"]) 2)))
-
-  (testing "Gets vector items"
-    (is (= (sut/get-in* ["Banana"] [0]) "Banana"))
-    (is (= (sut/get-in* {:a ["Apple" "Banana"]} [:a 1]) "Banana"))
-    (is (= (sut/get-in* [[:a :b] [:c :d]] [1 0]) :c)))
-
-  (testing "Gets list items"
-    (is (= (sut/get-in* '("Banana") [0]) "Banana"))
-    (is (= (sut/get-in* {:a '("Apple" "Banana")} [:a 1]) "Banana"))
-    (is (= (sut/get-in* (list (list :a :b) (list :c :d)) [1 0]) :c)))
-
-  (testing "Gets lazy seq items"
-    (is (= (sut/get-in* (range 100) [3]) 3)))
-
-  (testing "Resolves custom JWT accessor"
-    (is (= (keys (sut/get-in* {:token token} [:token :gadget/JWT])) [:header :data :signature]))))
 
 (deftest prepare-navigated-data-test
   (testing "Serves up data at path"
@@ -279,38 +303,18 @@
                 :ref (atom {:key {:a 1, :b 2, :token token}})}
                sut/prepare-data
                (select-keys [:path :data]))
-           {:path [{:text "Some data" :actions [[:set-path "Some data" []]]}
+           {:path [{:text "Some data" :actions {:go [[:set-path "Some data" []]]}}
                    {:text ":key"}]
-            :data [[{:type :keyword :val ":a"} {:val "1" :type :number :copyable "1"}]
-                   [{:type :keyword :val ":b"} {:val "2" :type :number :copyable "2"}]
+            :data [[{:type :keyword :val ":a"}
+                    {:val "1"
+                     :type :number
+                     :actions {:copy [[:copy-to-clipboard "Some data" [:key :a]]]}}]
+                   [{:type :keyword :val ":b"}
+                    {:val "2"
+                     :type :number
+                     :actions {:copy [[:copy-to-clipboard "Some data" [:key :b]]]}}]
                    [{:type :keyword :val ":token"}
                     {:type :jwt
                      :val "\"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...\""
-                     :actions [[:set-path "Some data" [:key :token :gadget/JWT]]]
-                     :copyable (str "\"" token "\"")}]]}))))
-
-(deftest prepare-copyable-test
-  (testing "Prepares data at path for copying"
-    (is (= (-> {:label "My data"
-                :path []
-                :ref (atom {:key {:a 1, :b 2}})}
-               sut/prepare-data
-               :copyable)
-           "{:key {:a 1, :b 2}}"))
-
-    (is (= (-> {:label "My data"
-                :path [:key]
-                :ref (atom {:key {:a 1, :b 2}})}
-               sut/prepare-data
-               :copyable)
-           "{:a 1, :b 2}")))
-
-  (testing "Prepares data for copying for each item"
-    (is (= (->> {:label "My data"
-                 :path []
-                 :ref (atom {:key {:a 1, :b 2}})}
-                sut/prepare-data
-                :data
-                (map second)
-                (map :copyable))
-           ["{:a 1, :b 2}"]))))
+                     :actions {:go [[:set-path "Some data" [:key :token :gadget/JWT]]]
+                               :copy [[:copy-to-clipboard "Some data" [:key :token]]]}}]]}))))
