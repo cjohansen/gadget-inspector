@@ -2,7 +2,8 @@
 
 const konsole = chrome.extension.getBackgroundPage().console;
 var panelWindow;
-var queue = [];
+var queued;
+
 
 chrome.devtools.panels.create(
   "CLJS Data",
@@ -13,11 +14,11 @@ chrome.devtools.panels.create(
       panel.onShown.removeListener(onShown);
       panelWindow = panelWin;
 
-      while (queue.length > 0) {
-        panelWindow.receiveMessage(queue.shift());
-      }
 
-      //panelWindow.sendMessage(msg => port.postMessage(msg));
+      if (queued) {
+        panelWindow.receiveMessage(queued);
+        queued = null;
+      }
     });
   }
 );
@@ -40,8 +41,8 @@ chrome.devtools.network.onNavigated.addListener(url => {
       }
     });
   } else {
-    konsole.log("Empty queue", queue.length);
-    queue = [];
+    konsole.log("Unqueue message");
+    queued = null;
   }
 });
 
@@ -49,6 +50,6 @@ backgroundPageConnection.onMessage.addListener((request, sender, sendResponse) =
   if (panelWindow) {
     panelWindow.receiveMessage({request, sender});
   } else {
-    queue.push({request, sender});
+    queued = {request, sender};
   }
 });
