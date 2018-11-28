@@ -5,8 +5,8 @@ var panelWindow;
 var queue = [];
 
 chrome.devtools.panels.create(
-  "Atoms",
-  "MyPanelIcon.png",
+  "CLJS Data",
+  "",
   "panel.html",
   panel => {
     panel.onShown.addListener(function onShown(panelWin) {
@@ -35,7 +35,7 @@ chrome.devtools.network.onNavigated.addListener(url => {
   if (panelWindow) {
     panelWindow.receiveMessage({
       request: {
-        id: "cljs-atom-browser",
+        id: "cljs-data-browser",
         type: "reset"
       }
     });

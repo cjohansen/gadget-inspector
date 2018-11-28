@@ -1,5 +1,5 @@
-(ns cljs-atom-browser.inspector
-  (:require [cljs-atom-browser.actions :as actions]
+(ns cljs-data-browser.inspector
+  (:require [cljs-data-browser.actions :as actions]
             [quiescent.core :as q]
             [quiescent.dom :as d]))
 
@@ -149,7 +149,7 @@
   [{:keys [data]} callback]
   (apply d/tbody {} (map Entry data)))
 
-(q/defcomponent Inspector [{:keys [atoms]}]
+(q/defcomponent Inspector [{:keys [data]}]
   (d/div {:className "inspector"
           :style {:fontSize "12px"
                   :fontFamily "helvetica neue, lucida grande, sans-serif"
@@ -159,5 +159,5 @@
     (d/table {:style {:borderCollapse "collapse"
                       :width "100%"}}
       (mapcat vector
-              (map Header atoms)
-              (map Browser atoms)))))
+              (map Header data)
+              (map Browser data)))))

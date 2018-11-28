@@ -33,7 +33,7 @@ chrome.runtime.onConnect.addListener(port => {
 });
 
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
-  if (sender.tab && request.id == "cljs-atom-browser") {
+  if (sender.tab && request.id == "cljs-data-browser") {
     const tabId = sender.tab.id;
 
     if (tabId in connections) {

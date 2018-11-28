@@ -1,5 +1,5 @@
-(ns cljs-atom-browser.ui
-  (:require [cljs-atom-browser.inspector :refer [Inspector]]
+(ns cljs-data-browser.ui
+  (:require [cljs-data-browser.inspector :refer [Inspector]]
             [cljs.reader :as reader]
             [quiescent.core :as q]))
 

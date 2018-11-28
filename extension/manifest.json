@@ -1,7 +1,7 @@
 {
-  "name": "ClojureScript Atom Browser",
+  "name": "ClojureScript Data Browser",
   "version": "1.0",
-  "description": "Browse the contents of ClojureScript atoms, log events that cause it to change, and skip around its history.",
+  "description": "Browse the contents of ClojureScript data, browse and restore historic atom states",
   "manifest_version": 2,
   "devtools_page": "devtools.html",
   "background": {

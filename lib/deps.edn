@@ -3,9 +3,5 @@
         org.clojure/clojurescript {:mvn/version "1.10.439"}}
  :aliases {:dev {:extra-paths ["dev" "test" "target" "resources" "../inspector/src"]
                  :extra-deps {com.bhauman/figwheel-main {:mvn/version "0.1.9"}
-                              cljs-atom-browser {:local/root "../inspector"}}}
-           :test {:extra-deps {lambdaisland/kaocha {:mvn/version "0.0-176"}}}
-           :build-panel {:main-opts ["-m" "cljs.main"
-                                     "-O" "advanced"
-                                     "-o" "extension/panel.js"
-                                     "-c" "cljs-atom-browser.panel"]}}}
+                              cljs-data-browser {:local/root "../inspector"}}}
+           :test {:extra-deps {lambdaisland/kaocha {:mvn/version "0.0-176"}}}}}

@@ -1,6 +1,6 @@
-(ns cljs-atom-browser.panel
-  (:require [cljs-atom-browser.actions :as actions]
-            [cljs-atom-browser.ui :as ui]))
+(ns cljs-data-browser.panel
+  (:require [cljs-data-browser.actions :as actions]
+            [cljs-data-browser.ui :as ui]))
 
 (set! *warn-on-infer* true)
 

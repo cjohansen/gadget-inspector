@@ -8,4 +8,4 @@
                                      "-d" "target"
                                      "-o" "target/panel.js"
                                      "-co" "cljs.edn"
-                                     "-c" "cljs-atom-browser.panel"]}}}
+                                     "-c" "cljs-data-browser.panel"]}}}
