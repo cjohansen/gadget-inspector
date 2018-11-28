@@ -1,1 +1,2 @@
-{:infer-externs true}
+{:infer-externs true
+ :source-map "target/panel.js.map"}
