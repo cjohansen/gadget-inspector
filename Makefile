@@ -32,4 +32,7 @@ remote-inspector: remote/static/assets/remote-inspector.js remote/static/assets/
 remote-server: remote/static/assets/remote-inspector.js remote/static/assets/remote-inspector.js.map remote/static/assets/inspector.css
 	cd remote && go run server.go
 
-.PHONY: remote-inspector remote-server
+clean:
+	rm -fr remote/static/assets inspector/target extension/panel.js extension/panel.js.map extension/inspector.css
+
+.PHONY: remote-inspector remote-server clean
