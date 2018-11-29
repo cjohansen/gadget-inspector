@@ -16,7 +16,7 @@ remote/static/assets:
 	mkdir -p remote/static/assets
 
 inspector/target/remote-inspector.js: inspector/src/**/* inspector/deps.edn inspector/cljs.edn remote/static/assets
-	clojure -A:build-remote-inspector
+	cd inspector && clojure -A:build-remote-inspector
 
 remote/static/assets/remote-inspector.js: inspector/target/remote-inspector.js remote/static/assets
 	cp inspector/target/remote-inspector.js remote/static/assets/remote-inspector.js
