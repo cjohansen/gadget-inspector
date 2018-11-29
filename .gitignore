@@ -4,3 +4,4 @@ target
 figwheel-main.edn
 /extension/inspector.css
 lib/.nrepl-port
+remote/static

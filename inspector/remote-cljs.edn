@@ -1,0 +1,2 @@
+{:infer-externs true
+ :source-map "target/remote-inspector.js.map"}

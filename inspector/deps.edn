@@ -8,4 +8,10 @@
                                      "-d" "target"
                                      "-o" "target/panel.js"
                                      "-co" "cljs.edn"
-                                     "-c" "cljs-data-browser.panel"]}}}
+                                     "-c" "cljs-data-browser.panel"]}
+           :build-remote-inspector {:main-opts ["-m" "cljs.main"
+                                                "-O" "advanced"
+                                                "-d" "target"
+                                                "-o" "target/remote-inspector.js"
+                                                "-co" "remote-cljs.edn"
+                                                "-c" "cljs-data-browser.remote-inspector"]}}}
