@@ -37,7 +37,7 @@
   <scm>
     <connection>scm:git:git://github.com/cjohansen/gadget-inspector.git</connection>
     <developerConnection>scm:git:ssh://git@github.com/cjohansen/gadget-inspector.git</developerConnection>
-    <tag></tag>
+    <tag>ff4d8bc1a57853b349fe4b2b9bb4750c6eecabc1</tag>
     <url>https://github.com/cjohansen/gadget-inspector</url>
   </scm>
 </project>
