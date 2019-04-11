@@ -4,4 +4,7 @@
  :aliases {:dev {:extra-paths ["dev" "test" "target" "resources" "../inspector/src"]
                  :extra-deps {com.bhauman/figwheel-main {:mvn/version "0.1.9"}
                               cljs-data-browser {:local/root "../inspector"}}}
-           :test {:extra-deps {lambdaisland/kaocha {:mvn/version "0.0-176"}}}}}
+           :test {:extra-deps {lambdaisland/kaocha {:mvn/version "0.0-176"}}}
+           :jar {:extra-deps {pack/pack.alpha {:git/url "https://github.com/juxt/pack.alpha.git"
+                                               :sha "f24279ca21dba3ba74a6f501cff0dbf630ce4355"}}
+                 :main-opts ["-m" "mach.pack.alpha.skinny" "--no-libs" "--project-path" "target/gadget-inspector.jar"]}}}

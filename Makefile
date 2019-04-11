@@ -32,7 +32,16 @@ remote-inspector: remote/static/assets/remote-inspector.js remote/static/assets/
 remote-server: remote/static/assets/remote-inspector.js remote/static/assets/remote-inspector.js.map remote/static/assets/inspector.css
 	cd remote && go run server.go
 
-clean:
-	rm -fr remote/static/assets inspector/target extension/panel.js extension/panel.js.map extension/inspector.css
+lib/target:
+	mkdir target
 
-.PHONY: remote-inspector remote-server clean
+lib/target/gadget-inspector.jar: lib/target lib/src/**/*.*
+	cd lib && clojure -A:jar
+
+deploy: lib/target/gadget-inspector.jar
+	cd lib && mvn deploy:deploy-file -Dfile=target/gadget-inspector.jar -DrepositoryId=clojars -Durl=https://clojars.org/repo -DpomFile=pom.xml
+
+clean:
+	rm -fr remote/static/assets inspector/target extension/panel.js extension/panel.js.map extension/inspector.css lib/target
+
+.PHONY: remote-inspector remote-server deploy clean

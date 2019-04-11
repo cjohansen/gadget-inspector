@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+  <groupId>cjohansen</groupId>
+  <artifactId>gadget-inspector</artifactId>
+  <version>0.2019.04.11</version>
+  <name>gadget-inspector</name>
+  <dependencies>
+    <dependency>
+      <groupId>org.clojure</groupId>
+      <artifactId>clojure</artifactId>
+      <version>1.10.0</version>
+    </dependency>
+    <dependency>
+      <groupId>org.clojure</groupId>
+      <artifactId>clojurescript</artifactId>
+      <version>1.10.439</version>
+    </dependency>
+  </dependencies>
+  <build>
+    <sourceDirectory>src</sourceDirectory>
+  </build>
+  <repositories>
+    <repository>
+      <id>clojars</id>
+      <url>https://repo.clojars.org/</url>
+    </repository>
+  </repositories>
+  <description>Inspect ClojureScript data in a Chrome extension, or over a remote connection.</description>
+  <url>https://github.com/cjohansen/gadget-inspector</url>
+  <licenses>
+    <license>
+      <name>EPL</name>
+      <url>https://opensource.org/licenses/EPL-2.0</url>
+    </license>
+  </licenses>
+  <scm>
+    <connection>scm:git:git://github.com/cjohansen/gadget-inspector.git</connection>
+    <developerConnection>scm:git:ssh://git@github.com/cjohansen/gadget-inspector.git</developerConnection>
+    <tag></tag>
+    <url>https://github.com/cjohansen/gadget-inspector</url>
+  </scm>
+</project>
