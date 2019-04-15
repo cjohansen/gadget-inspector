@@ -3,7 +3,7 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>cjohansen</groupId>
   <artifactId>gadget-inspector</artifactId>
-  <version>0.2019.04.12</version>
+  <version>0.2019.04.15</version>
   <name>gadget-inspector</name>
   <dependencies>
     <dependency>
