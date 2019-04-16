@@ -318,3 +318,21 @@
                      :val "\"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...\""
                      :actions {:go [[:set-path "Some data" [:key :token :gadget/JWT]]]
                                :copy [[:copy-to-clipboard "Some data" [:key :token]]]}}]]}))))
+
+(def calls (atom []))
+
+(defmethod sut/render-data :default [data-fn]
+  (swap! calls conj data-fn))
+
+(deftest does-not-call-render-when-paused
+  (reset! calls [])
+  (sut/pause!)
+  (sut/render)
+  (is (= [] @calls))
+  (sut/resume!))
+
+(deftest renders-when-resumed
+  (reset! calls [])
+  (sut/pause!)
+  (sut/resume!)
+  (is (= 1 (count @calls))))

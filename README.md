@@ -47,6 +47,27 @@ The label operates as both an identifier for your data, and a header, so you can
 tell structures apart. Inspecting another piece of data with the same label will
 replace the corresponding section in the extension.
 
+### Temporarily pausing inspection
+
+In performance critical moments, continuously serializing data for the inspector
+may detract from the user experience. While this will never happen to regular
+users in production, it can still be annoying during development. For those
+cases, you can pause the inspector, and resume it when the intensive work has
+completed:
+
+```clj
+(require '[gadget.inspector :as inspector]
+         '[cljs.core.async :refer [go <!]))
+
+(inspector/pause!)
+
+(go
+  (<! (animate-smoothly))
+  (inspector/resume!))
+```
+
+The inspector will render immediately when you call `resume!`.
+
 ## Using the Chrome extension
 
 Start by building the extension. Requires the `clojure` binary:

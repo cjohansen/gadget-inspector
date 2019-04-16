@@ -6,6 +6,7 @@
 
 (defmulti render-data identity)
 
+(defonce enabled? (atom true))
 (defonce store (atom {:data {}}))
 
 (defn deserialize [payload]
@@ -196,10 +197,11 @@
               (map (comp prepare-data second)))})
 
 (defn render []
-  (render-data
-   (fn []
-     (pr-str {:type :render
-              :data (prepare @store)}))))
+  (when @enabled?
+    (render-data
+     (fn []
+       (pr-str {:type :render
+                :data (prepare @store)})))))
 
 (add-watch store :gadget/inspector render)
 
@@ -222,3 +224,10 @@
   (let [ref (atom val)]
     (inspect label ref)
     ref))
+
+(defn pause! []
+  (reset! enabled? false))
+
+(defn resume! []
+  (reset! enabled? true)
+  (render))
