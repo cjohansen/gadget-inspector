@@ -1,5 +1,5 @@
 (ns gadget.core
-  (:require [cljs.reader :as reader]
+  (:require #?(:cljs [cljs.reader :as reader])
             [clojure.string :as str]
             [gadget.actions :as actions]
             [gadget.std :refer [get-in*]]))
@@ -8,8 +8,12 @@
 
 (defonce store (atom {:data {}}))
 
+(defn deserialize [payload]
+  #?(:cljs (reader/read-string payload)
+     :clj (read-string payload)))
+
 (defn action [payload]
-  (let [{:keys [action args]} (reader/read-string payload)]
+  (let [{:keys [action args]} (deserialize payload)]
     (actions/exec-action store action args)))
 
 (def path-names
@@ -65,7 +69,7 @@
 
 (defn- too-long-for-inline? [v]
   (< inline-length-limit
-     (.-length (pr-str v))))
+     (count (pr-str v))))
 
 (defmulti prep-val (fn [label path v] (vtype v)))
 
@@ -199,12 +203,16 @@
 
 (add-watch store :gadget/inspector render)
 
+(defn- atom? [ref]
+  (instance? #?(:cljs Atom
+                :clj clojure.lang.Atom) ref))
+
 (defn inspect [label ref]
-  (when (instance? Atom ref)
+  (when (atom? ref)
     (add-watch ref :gadget/inspector render))
   (swap! store update :data assoc label (merge {:label label :path []}
                                                (select-keys (get-in @store [:data label]) [:path])
-                                               (if (instance? Atom ref)
+                                               (if (atom? ref)
                                                  {:ref ref}
                                                  {:data ref})))
   render

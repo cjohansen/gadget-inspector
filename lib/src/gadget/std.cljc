@@ -4,7 +4,7 @@
 (defmulti get* (fn [data path] path))
 
 (defn- base64json [s]
-  (-> s js/atob JSON.parse (js->clj :keywordize-keys true)))
+  #?(:cljs (-> s js/atob JSON.parse (js->clj :keywordize-keys true))))
 
 (defmethod get* :gadget/JWT [data path]
   (when (string? data)
