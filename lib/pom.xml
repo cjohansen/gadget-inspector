@@ -3,7 +3,7 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>cjohansen</groupId>
   <artifactId>gadget-inspector</artifactId>
-  <version>0.2019.04.16</version>
+  <version>0.2019.04.16-1</version>
   <name>gadget-inspector</name>
   <dependencies>
     <dependency>
@@ -37,7 +37,7 @@
   <scm>
     <connection>scm:git:git://github.com/cjohansen/gadget-inspector.git</connection>
     <developerConnection>scm:git:ssh://git@github.com/cjohansen/gadget-inspector.git</developerConnection>
-    <tag>e742dace149c8216029db89b08c4044e712a8f2f</tag>
+    <tag>d4acdfb8dd6ff465aa10f1842cf313d00da42eea</tag>
     <url>https://github.com/cjohansen/gadget-inspector</url>
   </scm>
 </project>
