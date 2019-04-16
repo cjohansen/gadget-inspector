@@ -203,21 +203,27 @@
        (pr-str {:type :render
                 :data (prepare @store)})))))
 
-(add-watch store :gadget/inspector render)
+(add-watch store :gadget/inspector (fn [_ _ _ _] (render)))
 
 (defn- atom? [ref]
   (instance? #?(:cljs Atom
                 :clj clojure.lang.Atom) ref))
 
-(defn inspect [label ref]
+(defn inspectable? [ref {:keys [inspectable?]}]
+  (or (not (ifn? inspectable?))
+      (inspectable? (if (atom? ref) @ref ref))))
+
+(defn inspect [label ref & [opts]]
   (when (atom? ref)
-    (add-watch ref :gadget/inspector render))
-  (swap! store update :data assoc label (merge {:label label :path []}
-                                               (select-keys (get-in @store [:data label]) [:path])
-                                               (if (atom? ref)
-                                                 {:ref ref}
-                                                 {:data ref})))
-  render
+    (add-watch ref :gadget/inspector (fn [_ _ _ new-state]
+                                       (when (inspectable? new-state opts)
+                                         (render)))))
+  (when (inspectable? ref opts)
+    (swap! store update :data assoc label (merge {:label label :path []}
+                                                 (select-keys (get-in @store [:data label]) [:path])
+                                                 (if (atom? ref)
+                                                   {:ref ref}
+                                                   {:data ref}))))
   nil)
 
 (defn create-atom [label & [val]]

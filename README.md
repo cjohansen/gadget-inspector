@@ -68,6 +68,41 @@ completed:
 
 The inspector will render immediately when you call `resume!`.
 
+### Inspection filter
+
+Instead of imperatively instructing Gadget to pause and resume all inspections,
+you can supply a filter that indicates whether or not data should be passed on
+for inspection. This feature is most useful when you inspect atoms, because
+those are typically watched and automatically inspected by Gadget. The filter
+will receive the data to inspect as its only argument (dereferenced, if it is an
+atom), and should return `true` to indicate that inspection is desirable:
+
+```clj
+(require '[gadget.inspector :as inspector])
+
+(inspector/inspect
+  "App store"
+  (atom {})
+  {:inspectable? (fn [state] (not (:page-transition state)))})
+```
+
+Filters also work for non-atom data, which can be useful if you already apply a
+filter to your inspected atoms, and would like to reuse the logic for one-off
+inspections:
+
+```clj
+(require '[gadget.inspector :as inspector])
+
+(def inspection-opts
+  {:inspectable? (fn [state] (not (:page-transition state)))})
+
+(inspector/inspect "App store" (atom {}) inspection-opts)
+
+(defn render-app [component page-data element]
+  (inspector/inspect "Page data" page-data inspection-opts)
+  (render (component page-data) element))
+```
+
 ## Using the Chrome extension
 
 Start by building the extension. Requires the `clojure` binary:

@@ -336,3 +336,19 @@
   (sut/pause!)
   (sut/resume!)
   (is (= 1 (count @calls))))
+
+(deftest does-not-call-render-when-atom-data-is-not-inspectable
+  (let [data (atom {:id 12})]
+    (reset! calls [])
+    (sut/inspect "My data" data {:inspectable? (fn [state] (nil? (:id state)))})
+    (swap! data assoc :name "Gadget")
+    (is (= 0 (count @calls)))
+    (swap! data dissoc :id)
+    (is (= 1 (count @calls)))))
+
+(deftest does-not-call-render-when-data-is-not-inspectable
+  (reset! calls [])
+  (sut/inspect "My data" {:id 12} {:inspectable? (fn [state] (nil? (:id state)))})
+  (is (= 0 (count @calls)))
+  (sut/inspect "My data" {:name "Gadget"} {:inspectable? (fn [state] (nil? (:id state)))})
+  (is (= 1 (count @calls))))
