@@ -50,7 +50,7 @@
 
 (def brackets
   {:vector ["[" "]"]
-   :list ["(" ")"]
+   :list ["'(" ")"]
    :seq ["(" ")"]
    :set ["#{" "}"]})
 
