@@ -2,7 +2,7 @@
   (:require #?(:cljs [cljs.reader :as reader])
             [clojure.string :as str]
             [gadget.actions :as actions]
-            [gadget.std :refer [get-in*]]))
+            [gadget.std :refer [get-in* date?]]))
 
 (defmulti render-data identity)
 
@@ -18,7 +18,8 @@
     (actions/exec-action store action args)))
 
 (def path-names
-  {:gadget/JWT "JWT"})
+  {:gadget/JWT "JWT"
+   :gadget/inst "#inst"})
 
 (defn- prepare-path [path-elems]
   (loop [[x & xs] path-elems
@@ -52,6 +53,7 @@
     (set? v) :set
     (symbol? v) :symbol
     (seq? v) :seq
+    (date? v) :date
     :default :object))
 
 (defn- prep-key [k]
@@ -87,6 +89,11 @@
      :actions {:go [[:set-path label (conj (vec path) :gadget/JWT)]]}}
 
     :default {:type :string :val (pr-str s)}))
+
+(defmethod prep-val :date [label path v]
+  {:val (pr-str v)
+   :type :date
+   :actions {:go [[:set-path label (conj (vec path) :gadget/inst)]]}})
 
 (defn- inflect [n w]
   (if (= n 1)

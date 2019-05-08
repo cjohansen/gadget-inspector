@@ -13,7 +13,8 @@
     (= t :number) {:color "#905"}
     (= t :keyword) {:color "#c80000"}
     (= t :map-keys) {:color "#c80000"}
-    (= t :boolean) {:color "#3424fb" :fontWeight "bold"}))
+    (= t :boolean) {:color "#3424fb" :fontWeight "bold"}
+    (= t :date) {:fontWeight "bold"}))
 
 (def code-styles
   {:fontFamily "menlo, lucida console, monospace"})
