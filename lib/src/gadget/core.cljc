@@ -172,7 +172,7 @@
        :val (str "(" lazy-sample "+ items, click to load 0-" lazy-sample ")")
        :actions {:go [[:set-path label path]]}}
       (if (too-long-for-inline? s)
-        {:type :summary :val (summarize "(" s ")")}
+        {:type :summary :val (summarize "(" s ")") :actions {:go [[:set-path label path]]}}
         {:type :seq :val (map #(prep-val label path %) s)}))))
 
 (defn- key-vals [v]
