@@ -33,9 +33,11 @@
       supports-intl? (assoc :timezone #?(:cljs (.. js/Intl DateTimeFormat resolvedOptions -timeZone))))))
 
 (defmethod get* :default [data path]
-  (if (and (seq? data) (number? path))
-    (nth data path)
-    (get data path)))
+  (if (coll? data)
+    (if (and (seq? data) (number? path))
+      (nth data path)
+      (get data path))
+    data))
 
 (defn get-in* [data path]
   (if-let [p (first path)]

@@ -24,5 +24,8 @@
   (testing "Gets lazy seq items"
     (is (= (sut/get-in* (range 100) [3]) 3)))
 
+  (testing "Returns non-collections untouched"
+    (is (= (sut/get-in* :oh/noes [3]) :oh/noes)))
+
   (testing "Resolves custom JWT accessor"
     (is (= (keys (sut/get-in* {:token token} [:token :gadget/JWT])) [:header :data :signature]))))
