@@ -265,7 +265,8 @@
   (testing "Browsable seq"
     (is (= (prepped-vals {:bigger-list (range 400)})
            [{:type :summary
-             :actions {:copy [[:copy-to-clipboard "My data" [:bigger-list]]]}
+             :actions {:copy [[:copy-to-clipboard "My data" [:bigger-list]]]
+                       :go [[:set-path "My data" [:bigger-list]]]}
              :val "(400 numbers)"}])))
 
   (testing "Lazy seq"
