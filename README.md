@@ -17,7 +17,7 @@ You need the small agent library to expose data for inspection. It is available
 from Clojars:
 
 ```sh
-cjohansen/gadget-inspector {:mvn/version "0.2019.05.08"}
+cjohansen/gadget-inspector {:mvn/version "0.2019.05.20"}
 ```
 
 Then, wither create your app-wide atom with the inspector, or inspect an
