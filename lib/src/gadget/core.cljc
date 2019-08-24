@@ -2,7 +2,7 @@
   (:require #?(:cljs [cljs.reader :as reader])
             [clojure.string :as str]
             [gadget.actions :as actions]
-            [gadget.std :refer [get-in* date?]]))
+            [gadget.std :refer [get-in* date? debounce]]))
 
 (defmulti render-data identity)
 
@@ -13,8 +13,11 @@
   #?(:cljs (reader/read-string payload)
      :clj (read-string payload)))
 
+(def pending-action? (atom false))
+
 (defn action [payload]
   (let [{:keys [action args]} (deserialize payload)]
+    (reset! pending-action? true)
     (actions/exec-action store action args)))
 
 (def path-names
@@ -203,12 +206,20 @@
               (sort-by first)
               (map (comp prepare-data second)))})
 
+(defn render-data-now [f]
+  (render-data f))
+
+(def render-data-debounced (debounce render-data-now 250))
+
 (defn render []
   (when @enabled?
-    (render-data
-     (fn []
-       (pr-str {:type :render
-                :data (prepare @store)})))))
+    (let [render-fn (if @pending-action? render-data-now render-data-debounced)]
+      (when @pending-action?
+        (reset! pending-action? false))
+      (render-fn
+       (fn []
+         (pr-str {:type :render
+                  :data (prepare @store)}))))))
 
 (add-watch store :gadget/inspector (fn [_ _ _ _] (render)))
 
