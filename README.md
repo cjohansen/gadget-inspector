@@ -20,7 +20,7 @@ from Clojars:
 cjohansen/gadget-inspector {:mvn/version "0.2019.05.20"}
 ```
 
-Then, wither create your app-wide atom with the inspector, or inspect an
+Then, either create your app-wide atom with the inspector, or inspect an
 existing atom:
 
 ```clj
