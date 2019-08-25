@@ -333,12 +333,14 @@
   (sut/resume!))
 
 (deftest renders-when-resumed
+  (sut/set-render-debounce-ms! 0)
   (reset! calls [])
   (sut/pause!)
   (sut/resume!)
   (is (= 1 (count @calls))))
 
 (deftest does-not-call-render-when-atom-data-is-not-inspectable
+  (sut/set-render-debounce-ms! 0)
   (let [data (atom {:id 12})]
     (reset! calls [])
     (sut/inspect "My data" data {:inspectable? (fn [state] (nil? (:id state)))})
@@ -348,6 +350,7 @@
     (is (= 1 (count @calls)))))
 
 (deftest does-not-call-render-when-data-is-not-inspectable
+  (sut/set-render-debounce-ms! 0)
   (reset! calls [])
   (sut/inspect "My data" {:id 12} {:inspectable? (fn [state] (nil? (:id state)))})
   (is (= 0 (count @calls)))

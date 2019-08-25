@@ -209,11 +209,18 @@
 (defn render-data-now [f]
   (render-data f))
 
-(def render-data-debounced (debounce render-data-now 250))
+(def render-data-debounced (atom (debounce render-data-now 250)))
+
+(defn set-render-debounce-ms! [ms]
+  (reset!
+   render-data-debounced
+   (if (= ms 0)
+     render-data-now
+     (debounce render-data-now ms))))
 
 (defn render []
   (when @enabled?
-    (let [render-fn (if @pending-action? render-data-now render-data-debounced)]
+    (let [render-fn (if @pending-action? render-data-now @render-data-debounced)]
       (when @pending-action?
         (reset! pending-action? false))
       (render-fn
