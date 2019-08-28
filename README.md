@@ -45,15 +45,31 @@ going into a UI component, with the `inspect` function:
 
 The label operates as both an identifier for your data, and a header, so you can
 tell structures apart. Inspecting another piece of data with the same label will
-replace the corresponding section in the extension.
+replace the corresponding section in the inspector.
+
+### Controlling the liveness of the inspector
+
+By default, the inspector will only update its UI 250ms after changes to your
+data occurred. This should help avoid the inspector detracting from your app's
+performance. You can override this value if you wish:
+
+```clj
+(require '[gadget.inspector :as inspector])
+
+;; Render less frequently
+(inspector/set-render-debounce-ms! 1000)
+
+;; Render synchronously on every change
+(inspector/set-render-debounce-ms! 0)
+```
 
 ### Temporarily pausing inspection
 
-In performance critical moments, continuously serializing data for the inspector
-may detract from the user experience. While this will never happen to regular
-users in production, it can still be annoying during development. For those
-cases, you can pause the inspector, and resume it when the intensive work has
-completed:
+Even with debouncing, you may find that the work done by the inspector is too
+much in performance critical moments. While this will never be a problem for
+regular users in production, it can still be annoying during development. For
+those cases, you can pause the inspector, and resume it when the intensive work
+has completed:
 
 ```clj
 (require '[gadget.inspector :as inspector]
