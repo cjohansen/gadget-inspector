@@ -1,7 +1,7 @@
 {:paths ["src"]
  :deps {org.clojure/clojure {:mvn/version "1.10.0-beta6"}
         org.clojure/clojurescript {:mvn/version "1.10.439"}
-        quiescent {:mvn/version "0.3.2"}}
+        cjohansen/dumdom {:mvn/version "2019.02.03-3"}}
  :aliases {:test {:extra-deps {lambdaisland/kaocha {:mvn/version "0.0-176"}}}
            :build-panel {:main-opts ["-m" "cljs.main"
                                      "-O" "advanced"

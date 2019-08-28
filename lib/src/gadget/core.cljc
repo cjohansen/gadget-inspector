@@ -1,6 +1,7 @@
 (ns gadget.core
   (:require #?(:cljs [cljs.reader :as reader])
             [clojure.string :as str]
+            [clojure.datafy :as datafy]
             [gadget.actions :as actions]
             [gadget.std :refer [get-in* date? debounce]]))
 
@@ -20,30 +21,14 @@
     (reset! pending-action? true)
     (actions/exec-action store action args)))
 
-(def path-names
-  {:gadget/JWT "JWT"
-   :gadget/inst "#inst"})
+;; Type inference functions
 
-(defn- prepare-path [path-elems]
-  (loop [[x & xs] path-elems
-         path []
-         res []]
-    (if (seq xs)
-      (let [path (conj (vec path) x)]
-        (if (path-names (first xs))
-          (let [path (conj (vec path) (first xs))
-                xs (vec (rest xs))]
-            (recur xs
-                   path
-                   (conj res (merge {:text (or (path-names x) (str x))}
-                                    (when (seq xs) {:actions {:go [[:set-path (first path) (rest path)]]}})))))
-          (recur (vec xs) path (conj res {:text (or (path-names x) (str x))
-                                          :actions {:go [[:set-path (first path) (rest path)]]}}))))
-      (if x
-        (conj res {:text (str x)})
-        res))))
+(def type-fns (atom nil))
 
-(defn- vtype [v]
+(defn add-type-inference [f]
+  (swap! type-fns conj f))
+
+(defn- symbolic-type [v]
   (cond
     (string? v) :string
     (keyword? v) :keyword
@@ -59,55 +44,14 @@
     (date? v) :date
     :default :object))
 
-(defn- prep-key [k]
-  {:val (cond
-          (seq? k) (let [selection (take 11 k)]
-                     (if (= (count selection) 11)
-                       (str "(" (str/join " " (take 10 k)) " ...)")
-                       (pr-str selection)))
-          :default (pr-str k))
-   :type (vtype k)})
+(defn synthetic-type [value]
+  (loop [[f & fs] @type-fns]
+    (or (when f (f value))
+        (if-let [fs (seq fs)]
+          (recur fs)
+          (symbolic-type value)))))
 
-(defn- constructor [v]
-  (second (re-find #"function (.*)\(" (str (type v)))))
-
-(def inline-length-limit 120)
-
-(defn- too-long-for-inline? [v]
-  (< inline-length-limit
-     (count (pr-str v))))
-
-(defmulti prep-val (fn [label path v] (vtype v)))
-
-(defmethod prep-val :default [label path v]
-  {:val (pr-str v) :type (vtype v)})
-
-(def re-jwt #"^[A-Za-z0-9-_=]{4,}\.[A-Za-z0-9-_=]{4,}\.?[A-Za-z0-9-_.+/=]*$")
-
-(defmethod prep-val :string [label path s]
-  (cond
-    (re-find re-jwt s)
-    {:val (pr-str (str (first (str/split s #"\.")) "..."))
-     :type :jwt
-     :actions {:go [[:set-path label (conj (vec path) :gadget/JWT)]]}}
-
-    :default {:type :string :val (pr-str s)}))
-
-(defmethod prep-val :date [label path v]
-  {:val (pr-str v)
-   :type :date
-   :actions {:go [[:set-path label (conj (vec path) :gadget/inst)]]}})
-
-(defn- inflect [n w]
-  (if (= n 1)
-    w
-    (str w "s")))
-
-(defn- summarize [pre c post & [w]]
-  (let [num (count c)
-        types (into #{} (map vtype c))
-        w (or w (if (= 1 (count types)) (name (first types)) "item"))]
-    (str pre num " " (inflect num w) post)))
+;; Sorting
 
 (defn type-pref [v]
   (cond
@@ -133,72 +77,197 @@
        (sort-by pr-str)
        (sort-by type-pref)))
 
-(defmethod prep-val :object [label path o]
-  (let [constructor (constructor o)]
-    {:val (str "object[" constructor "]")
-     :type :object
-     :constructor constructor}))
+;; Data conversion and navigation
 
-(defmethod prep-val :map [label path m]
-  (let [prep-val (partial prep-val label path)]
-    (if (too-long-for-inline? m)
-      (let [ks (map first (sort-keys m))]
-        (assoc
-         (if (too-long-for-inline? ks)
-           {:type :summary :val (summarize "{" ks "}" "key")}
-           {:type :map-keys :val (map prep-val ks)})
-         :actions {:go [[:set-path label path]]}))
-      {:type :map
-       :val (map (fn [[k v]] [(prep-key k) (prep-val v)]) (sort-keys m))})))
+(defmulti datafy (fn [data] (synthetic-type data)))
 
-(defmethod prep-val :set [label path s]
-  (if (too-long-for-inline? s)
-    {:type :summary :val (summarize "#{" s "}") :actions {:go [[:set-path label path]]}}
-    {:type :set :val (into #{} (map #(prep-val label path %) (sort-vals s)))}))
+(defmethod datafy :default [data]
+  (datafy/datafy data))
 
-(defmethod prep-val :vector [label path v]
-  (if (too-long-for-inline? v)
-    {:type :summary :val (summarize "[" v "]") :actions {:go [[:set-path label path]]}}
-    {:type :vector :val (map #(prep-val label path %) v)}))
+(defn nav-in [data path]
+  (if-let [p (first path)]
+    (let [data (datafy data)]
+      (recur (datafy/nav data p (get data p)) (rest path)))
+    data))
 
-(defmethod prep-val :list [label path l]
-  (if (too-long-for-inline? l)
-    {:type :summary :val (summarize "(" l ")") :actions {:go [[:set-path label path]]}}
-    {:type :list :val (map #(prep-val label path %) l)}))
+;; Rendering
+
+(defmulti render (fn [view data] [view (:type data)]))
+
+(defn render-with-view [view label path raw]
+  (render view {:raw raw
+                :type (synthetic-type raw)
+                :data (datafy raw)
+                :label label
+                :path path}))
+
+(defn prep-browser-entries [label path entries]
+  (->> entries
+       (map (fn [[k v]]
+              (let [target-path (conj path k)]
+                {:k (render-with-view :inline label path k)
+                 :v (render-with-view :inline label target-path v)
+                 :actions {:go [[:set-path label target-path]]
+                           :copy [[:copy-to-clipboard label target-path]]}})))))
+
+(defn- browser-data [label path data]
+  [:gadget/browser {:key (str label "-browser")
+                    :data (prep-browser-entries label path data)}])
+
+(defmethod render [:full :map] [_ {:keys [label path data]}]
+  (->> data
+       sort-keys
+       (browser-data label path)))
+
+(defmethod render [:full :vector] [_ {:keys [label path data]}]
+  (->> data
+       (map-indexed vector)
+       (sort-by first)
+       (browser-data label path)))
+
+(defmethod render [:full :list] [_ {:keys [label path data]}]
+  (->> data
+       (map-indexed vector)
+       (sort-by first)
+       (browser-data label path)))
 
 (def lazy-sample 1000)
 
-(defmethod prep-val :seq [label path s]
-  (let [selection (take lazy-sample s)]
-    (if (= (count selection) lazy-sample)
-      {:type :summary
-       :val (str "(" lazy-sample "+ items, click to load 0-" lazy-sample ")")
-       :actions {:go [[:set-path label path]]}}
-      (if (too-long-for-inline? s)
-        {:type :summary :val (summarize "(" s ")") :actions {:go [[:set-path label path]]}}
-        {:type :seq :val (map #(prep-val label path %) s)}))))
+;; TODO: Add action to navigate further
+(defmethod render [:full :seq] [_ {:keys [label path data]}]
+  (->> (take lazy-sample data)
+       (map-indexed vector)
+       (sort-by first)
+       (browser-data label path)))
 
-(defn- key-vals [v]
-  (cond
-    (map? v) (let [v (sort-keys v)]
-               [(map first v) (map second v)])
-    (seq? v) (let [selection (take lazy-sample v)
-                   kvs [(range (count selection)) selection]]
-               (if (< (count selection) lazy-sample)
-                 kvs
-                 [(concat (first kvs) ["..."]) (concat (second kvs) ["Truncated to first " lazy-sample " elements"])]))
-    :default [(range (count v)) v]))
+(defmethod render [:inline :keyword] [_ {:keys [raw]}]
+  [:gadget/keyword (pr-str raw)])
 
-(defn- prep-top-level-val [label path v]
-  (-> (prep-val label path v)
-      (assoc-in [:actions :copy] [[:copy-to-clipboard label path]])))
+(defmethod render [:inline :number] [_ {:keys [raw]}]
+  [:gadget/number (pr-str raw)])
+
+(defmethod render [:inline :boolean] [_ {:keys [raw]}]
+  [:gadget/boolean (pr-str raw)])
+
+(defmethod render [:inline :string] [_ {:keys [raw]}]
+  [:gadget/string (pr-str raw)])
+
+(defmethod render [:inline :nil] [_ {:keys [raw]}]
+  [:gadget/code {} "nil"])
+
+(defmethod render [:inline :symbol] [_ {:keys [raw]}]
+  [:gadget/code {} raw])
+
+(defn- constructor [v]
+  (second (re-find #"function (.*)\(" (str (type v)))))
+
+(defmethod render [:inline :object] [_ {:keys [raw]}]
+  [:gadget/code {}
+   "object[" [:strong {} (constructor raw)] "]"
+   #?(:cljs (when-not (= (.. js/Object -prototype -toString) (.-toString raw))
+              [:span "{" [:gadget/string (str "\"" (.toString raw) "\"")] "}"]))])
+
+(defmethod render [:inline :date] [_ {:keys [raw]}]
+  (let [[prefix str] (str/split (pr-str raw) #" ")]
+    [:gadget/literal {:prefix prefix :str str}]))
+
+(def inline-length-limit 120)
+
+(defn- too-long-for-inline? [v]
+  (< inline-length-limit
+     (count (pr-str v))))
+
+(defn- inflect [n w]
+  (if (= n 1)
+    w
+    (str w "s")))
+
+(defn- summarize [pre c post & [w]]
+  (let [num (count c)
+        types (into #{} (map synthetic-type c))
+        w (or w (if (= 1 (count types)) (name (first types)) "item"))]
+    (str pre num " " (inflect num w) post)))
+
+(defmethod render [:inline :set] [_ {:keys [raw label path]}]
+  (if (too-long-for-inline? raw)
+    [:gadget/link [:gadget/code {} (summarize "#{" raw "}")]]
+    [:gadget/inline-coll {:brackets ["#{" "}"]
+                          :xs (->> raw
+                                   sort-vals
+                                   (map #(render-with-view :inline label path %)))}]))
+
+(defmethod render [:inline :vector] [_ {:keys [raw label path]}]
+  (if (too-long-for-inline? raw)
+    [:gadget/link [:gadget/code {} (summarize "[" raw "]")]]
+    [:gadget/inline-coll {:brackets ["[" "]"]
+                          :xs (map #(render-with-view :inline label path %) raw)}]))
+
+(defmethod render [:inline :list] [_ {:keys [raw label path]}]
+  (if (too-long-for-inline? raw)
+    [:gadget/link [:gadget/code {} (summarize "(" raw ")")]]
+    [:gadget/inline-coll {:brackets ["'(" ")"]
+                          :xs (map #(render-with-view :inline label path %) raw)}]))
+
+(defmethod render [:inline :map] [_ {:keys [raw label path]}]
+  (if (too-long-for-inline? raw)
+    (let [ks (map first (sort-keys raw))]
+      (if (too-long-for-inline? ks)
+        [:gadget/link [:gadget/code {} (summarize "{" ks "}" "key")]]
+        [:gadget/code {}
+         [:gadget/inline-coll
+          {:brackets ["{" "}"]
+           :xs (map #(render-with-view :inline label (conj path %) %) ks)}]]))
+    [:gadget/inline-coll
+     {:brackets ["{" "}"]
+      :xs (->> raw
+               sort-keys
+               (map (fn [[k v]]
+                      [(render-with-view :inline label path k)
+                       " "
+                       (render-with-view :inline label (conj path k) v)]))
+               (interpose ", ")
+               (mapcat identity))}]))
+
+(defmethod render [:inline :seq] [_ {:keys [label path raw]}]
+  (let [selection (take lazy-sample raw)]
+    (cond
+      (= (count selection) lazy-sample)
+      [:gadget/link
+       [:gadget/code {}
+        (str "(" lazy-sample "+ items, click to load 0-" lazy-sample ")")]]
+
+      (too-long-for-inline? raw)
+      [:gadget/link [:gadget/code {} (summarize "(" raw ")")]]
+
+      :default
+      [:gadget/inline-coll
+       {:brackets ["(" ")"]
+        :xs (->> raw
+                 sort-vals
+                 (map-indexed #(render-with-view :inline label (conj path %1) %2)))}])))
+
+(defmethod render :default [view v]
+  (let [t (symbolic-type (:data v))]
+    (if (not= t (:type v))
+      (render view (assoc v :type t))
+      [:span {} (pr-str (:raw v))])))
+
+(defn- prepare-path [path-elems]
+  (loop [[x & xs] path-elems
+         path []
+         res []]
+    (if (seq xs)
+      (let [path (conj path x)]
+        (recur (vec xs) path (conj res {:text (str x)
+                                        :actions {:go [[:set-path (first path) (into [] (rest path))]]}})))
+      (if x
+        (conj res {:text (str x)})
+        res))))
 
 (defn prepare-data [{:keys [label path ref data]}]
-  (let [v (get-in* (or (some-> ref deref) data) path)]
+  (let [raw (nav-in (or (some-> ref deref) data) path)]
     {:path (prepare-path (concat [label] path))
-     :data (when v
-             (let [[ks vs] (key-vals v)]
-               (map vector (map prep-key ks) (map #(prep-top-level-val label (conj (vec path) %1) %2) ks vs))))
+     :hiccup (render-with-view :full label path raw)
      :actions {:copy [[:copy-to-clipboard label path]]}}))
 
 (defn prepare [state]
@@ -218,7 +287,7 @@
      render-data-now
      (debounce render-data-now ms))))
 
-(defn render []
+(defn render-inspector []
   (when @enabled?
     (let [render-fn (if @pending-action? render-data-now @render-data-debounced)]
       (when @pending-action?
@@ -228,7 +297,7 @@
          (pr-str {:type :render
                   :data (prepare @store)}))))))
 
-(add-watch store :gadget/inspector (fn [_ _ _ _] (render)))
+(add-watch store :gadget/inspector (fn [_ _ _ _] (render-inspector)))
 
 (defn- atom? [ref]
   (instance? #?(:cljs Atom
@@ -242,7 +311,7 @@
   (when (atom? ref)
     (add-watch ref :gadget/inspector (fn [_ _ _ new-state]
                                        (when (inspectable? new-state opts)
-                                         (render)))))
+                                         (render-inspector)))))
   (when (inspectable? ref opts)
     (swap! store update :data assoc label (merge {:label label :path []}
                                                  (select-keys (get-in @store [:data label]) [:path])
@@ -261,4 +330,4 @@
 
 (defn resume! []
   (reset! enabled? true)
-  (render))
+  (render-inspector))

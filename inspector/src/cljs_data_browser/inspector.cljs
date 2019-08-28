@@ -1,20 +1,12 @@
 (ns cljs-data-browser.inspector
   (:require [cljs-data-browser.actions :as actions]
-            [quiescent.core :as q]
-            [quiescent.dom :as d]))
+            [clojure.walk :as w]
+            [dumdom.core :as q]
+            [dumdom.dom :as d]))
 
 (defn trigger-actions [actions]
   (doseq [[action & args] actions]
     (actions/exec-action (pr-str {:action action :args args}))))
-
-(defn- type-styles [t]
-  (cond
-    (= t :string) {:color "#690"}
-    (= t :number) {:color "#905"}
-    (= t :keyword) {:color "#c80000"}
-    (= t :map-keys) {:color "#c80000"}
-    (= t :boolean) {:color "#3424fb" :fontWeight "bold"}
-    (= t :date) {:fontWeight "bold"}))
 
 (def code-styles
   {:fontFamily "menlo, lucida console, monospace"})
@@ -33,59 +25,36 @@
            :onClick #(trigger-actions actions)}
     content))
 
-(q/defcomponent InlineSymbol [s]
-  (code {:style (type-styles (:type s))}
-        (:val s)))
+(q/defcomponent String [s]
+  (code {:style {:color "#690"}} s))
 
-(declare ComplexSymbol)
+(q/defcomponent Number [n]
+  (code {:style {:color "#905"}} n))
 
-(q/defcomponent InlineMap [m]
-  (apply code {}
-         (concat [(d/strong {} "{")]
-                 (->> m
-                      (map (fn [[k v]] [(InlineSymbol k) " " (ComplexSymbol v)]))
-                      (interpose ", ")
-                      flatten)
-                 [(d/strong {} "}")])))
+(q/defcomponent KeywordValue [kw]
+  (code {:style {:color "#c80000"}} kw))
 
-(def brackets
-  {:vector ["[" "]"]
-   :list ["'(" ")"]
-   :seq ["(" ")"]
-   :set ["#{" "}"]})
+(q/defcomponent Boolean [b]
+  (code {:style {:color "#3424fb" :fontWeight "bold"}} b))
 
-(q/defcomponent InlineCollection [c]
-  (let [[pre post] (brackets (:type c))]
-    (apply
-     d/span {}
-     (concat [(d/strong {} pre)]
-             (interpose " " (map ComplexSymbol (:val c)))
-             [(d/strong {} post)]))))
+(q/defcomponent Date [d]
+  (code {:style {:fontWeight "bold"}} d))
 
-(q/defcomponent JWT [token]
-  (d/span {}
-    (d/strong {} "JWT: ")
-    (InlineSymbol {:type :string :val (:val token)})))
+(q/defcomponent Literal [{:keys [prefix str]}]
+  [:span {}
+   (code {:style {:fontWeight "bold"}} prefix)
+   " "
+   (String str)])
 
-(q/defcomponent MapKeys [k]
-  (apply d/span {}
-         (flatten
-          (concat [(d/strong {} "{")]
-                  (interpose " " (map ComplexSymbol (:val k)))
-                  [(d/strong {} "}")]))))
+(q/defcomponent InlineCollection [{:keys [brackets xs]}]
+  [:span {}
+   [:strong {} (first brackets)]
+   (interpose " " xs)
+   [:strong {} (second brackets)]])
 
-(q/defcomponent ComplexSymbol [sym]
-  (cond
-    (= (:type sym) :jwt) (JWT sym)
-    (= (:type sym) :map-keys) (MapKeys sym)
-
-    :default
-    (d/span {}
-      (cond
-        (= (:type sym) :summary) (d/strong {:style button-styles} (code {} (:val sym)))
-        (= (:type sym) :map) (InlineMap (:val sym))
-        (#{:list :seq :vector :set} (:type sym)) (InlineCollection sym)
-        :default (code {:style (type-styles (:type sym))} (:val sym))))))
+(q/defcomponent Link [v]
+  [:strong {:style button-styles}
+   v])
 
 (q/defcomponent CopyButton [actions]
   (d/div {:style {:padding "0 5px"}}
@@ -104,21 +73,22 @@
 (q/defcomponent Entry
   "An entry is one key/value pair (or index/value pair), formatted appropriately
   for their types"
-  [[k v]]
-  (d/tr {:onClick (when-let [actions (:actions v)]
+  [{:keys [k v actions]}]
+  (d/tr {:onClick (when-let [actions (:go actions)]
                     (fn [e]
-                      (trigger-actions (:go actions))))
-         :style (when (:actions v) {:cursor "pointer"})}
-    (d/td {:style {:padding "5px" :whiteSpace "nowrap" :minWidth "200px"}} (InlineSymbol k))
+                      (trigger-actions actions)))
+         :style (when (:go actions) {:cursor "pointer"})}
+    (d/td {:style {:padding "5px" :whiteSpace "nowrap" :minWidth "200px"}}
+      k)
     (d/td {:style {:padding "5px"
                    :position "relative"}}
-      (ComplexSymbol v)
+      v
       (d/div {:style {:position "absolute"
                       :right 0
                       :top 5
                       :transition "opacity 0.25s"}
               :className "copy-btn"}
-        (CopyButton (-> v :actions :copy))))))
+        (CopyButton (:copy actions))))))
 
 (q/defcomponent DataPath
   "The heading and current path in the data. When browsing nested maps and lists,
@@ -135,7 +105,7 @@
 
 (q/defcomponent Header
   :keyfn #(str (-> % :path first :text) "-header")
-  [{:keys [path actions]} callback]
+  [{:keys [path actions]}]
   (d/thead {}
     (d/tr {}
       (d/td {:colSpan 2}
@@ -146,9 +116,26 @@
           (CopyButton (:copy actions)))))))
 
 (q/defcomponent Browser
-  :keyfn #(str (-> % :path first :text) "-browser")
-  [{:keys [data]} callback]
+  :keyfn :key
+  [{:keys [data]}]
   (apply d/tbody {} (map Entry data)))
+
+(def component-map
+  {:gadget/browser Browser
+   :gadget/string String
+   :gadget/number Number
+   :gadget/keyword KeywordValue
+   :gadget/boolean Boolean
+   :gadget/literal Literal
+   :gadget/inline-coll InlineCollection
+   :gadget/link Link
+   :gadget/date Date
+   :gadget/code code})
+
+(q/defcomponent DataInspector
+  :keyfn #(str (-> % :path first :text) "-browser")
+  [{:keys [hiccup]}]
+  (w/postwalk #(get component-map % %) hiccup))
 
 (q/defcomponent Inspector [{:keys [data]}]
   (d/div {:className "inspector"
@@ -161,4 +148,4 @@
                       :width "100%"}}
       (mapcat vector
               (map Header data)
-              (map Browser data)))))
+              (map DataInspector data)))))
