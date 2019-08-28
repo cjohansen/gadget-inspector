@@ -77,6 +77,10 @@
        (sort-by pr-str)
        (sort-by type-pref)))
 
+(defn key-order [ks]
+  (let [ks (reverse ks)]
+    (fn [[k v]] (- (.indexOf ks k)))))
+
 ;; Data conversion and navigation
 
 (defmulti datafy (fn [data] (synthetic-type data)))
@@ -115,9 +119,10 @@
                     :data (prep-browser-entries label path data)}])
 
 (defmethod render [:full :map] [_ {:keys [label path data]}]
-  (->> data
-       sort-keys
-       (browser-data label path)))
+  (let [sort-fn (if-let [f (-> data meta :gadget/sort)] (partial sort-by f) sort-keys)]
+    (->> data
+         sort-fn
+         (browser-data label path))))
 
 (defmethod render [:full :vector] [_ {:keys [label path data]}]
   (->> data

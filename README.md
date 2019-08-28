@@ -308,6 +308,14 @@ Gadget's built-in instant tooling would pick this up and allow you to navigate
 into this value to see year, month, date, etc. Please disregard the abomination
 that is converting a local date to an instant like this.
 
+### Sorting
+
+When adding custom types for maps, you might want a different sorting than the
+default. By default, Gadget will sort keys roughly alphabetically. By attaching
+a function to the `:gadget/sort` key in the metadata on the map returned from
+`datafy`, Gadget will pass it to `sort-by`, and sort the map entries with this
+instead of the default strategy.
+
 ## Components
 
 Gadget allows renderers to return pure unadulterated

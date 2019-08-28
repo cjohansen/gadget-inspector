@@ -21,9 +21,11 @@
 
 (defmethod gadget/datafy :jwt [token]
   (let [[header data sig] (str/split token #"\.")]
-    {:header (base64json header)
-     :data (base64json data)
-     :signature sig}))
+    (with-meta
+      {:header (base64json header)
+       :data (base64json data)
+       :signature sig}
+      {:gadget/sort (gadget/key-order [:header :data :signature])})))
 
 ;; Dates
 
@@ -34,13 +36,20 @@
     (str "0" n)
     (str n)))
 
+(def date-key-order [:iso :locale-date-string :time :timezone :year :month :date :timestamp])
+
 (defmethod gadget/datafy :date [date]
-  (cond-> {:timestamp (.getTime date)
-           :iso (.toISOString date)
-           :date #?(:cljs (.toLocaleDateString date "en-US" (clj->js {:weekday "long"
-                                                                      :year "numeric"
-                                                                      :month "long"
-                                                                      :day "numeric"}))
-                    :clj nil)
-           :time (str (pad (.getHours date)) ":" (pad (.getMinutes date)) ":" (pad (.getSeconds date)))}
-    supports-intl? (assoc :timezone #?(:cljs (.. js/Intl DateTimeFormat resolvedOptions -timeZone)))))
+  (with-meta
+    (cond-> {:timestamp (.getTime date)
+             :iso (.toISOString date)
+             :locale-date-string #?(:cljs (.toLocaleDateString date "en-US" (clj->js {:weekday "long"
+                                                                                      :year "numeric"
+                                                                                      :month "long"
+                                                                                      :day "numeric"}))
+                                    :clj nil)
+             :year (+ 1900 (.getYear date))
+             :month (inc (.getMonth date))
+             :date (.getDate date)
+             :time (str (pad (.getHours date)) ":" (pad (.getMinutes date)) ":" (pad (.getSeconds date)))}
+      supports-intl? (assoc :timezone #?(:cljs (.. js/Intl DateTimeFormat resolvedOptions -timeZone))))
+    {:gadget/sort (gadget/key-order date-key-order)}))
