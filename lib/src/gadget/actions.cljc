@@ -1,5 +1,6 @@
 (ns gadget.actions
-  (:require [gadget.std :refer [get-in* state-data]]))
+  (:require [gadget.core :refer [nav-in]]
+            [gadget.std :refer [state-data]]))
 
 (defn to-clipboard [text]
   #?(:cljs
@@ -17,7 +18,10 @@
   (swap! store assoc-in [:data label :path] path))
 
 (defmethod exec-action :copy-to-clipboard [store _ [label path]]
-  (to-clipboard (pr-str (get-in* (state-data @store label) path))))
+  (to-clipboard (pr-str (nav-in (state-data @store label) path))))
+
+(defmethod exec-action :set-window-size [store _ [{:keys [width height]}]]
+  (prn "Set window size" width height))
 
 (defmethod exec-action :default [store action args]
   (prn "Unsupported action" action))

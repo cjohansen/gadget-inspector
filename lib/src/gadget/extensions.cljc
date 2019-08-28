@@ -2,6 +2,8 @@
   (:require [gadget.core :as gadget]
             [clojure.string :as str]))
 
+;; JWTs
+
 (def re-jwt #"^[A-Za-z0-9-_=]{4,}\.[A-Za-z0-9-_=]{4,}\.?[A-Za-z0-9-_.+/=]*$")
 
 (gadget/add-type-inference
@@ -22,3 +24,23 @@
     {:header (base64json header)
      :data (base64json data)
      :signature sig}))
+
+;; Dates
+
+(def supports-intl? #?(:cljs (and js/window.Intl js/window.Intl.DateTimeFormat)))
+
+(defn- pad [n]
+  (if (< n 10)
+    (str "0" n)
+    (str n)))
+
+(defmethod gadget/datafy :date [date]
+  (cond-> {:timestamp (.getTime date)
+           :iso (.toISOString date)
+           :date #?(:cljs (.toLocaleDateString date "en-US" (clj->js {:weekday "long"
+                                                                      :year "numeric"
+                                                                      :month "long"
+                                                                      :day "numeric"}))
+                    :clj nil)
+           :time (str (pad (.getHours date)) ":" (pad (.getMinutes date)) ":" (pad (.getSeconds date)))}
+    supports-intl? (assoc :timezone #?(:cljs (.. js/Intl DateTimeFormat resolvedOptions -timeZone)))))

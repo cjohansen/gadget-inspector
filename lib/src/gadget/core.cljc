@@ -3,7 +3,7 @@
             [clojure.string :as str]
             [clojure.datafy :as datafy]
             [gadget.actions :as actions]
-            [gadget.std :refer [get-in* date? debounce]]))
+            [gadget.std :refer [date? debounce]]))
 
 (defmulti render-data identity)
 
