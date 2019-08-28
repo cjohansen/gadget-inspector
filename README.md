@@ -345,9 +345,22 @@ The available types are:
 - `:gadget/string`
 - `:gadget/number`
 - `:gadget/keyword`
-- `:gadget/map-keys`
 - `:gadget/boolean`
-- `:gadget/inst`
+- `:gadget/date`
+
+### Literals
+
+```clj
+[`:gadget/literal` {:prefix "#inst" :str "2019-01-01T12:00:00Z"}]
+```
+
+### Link
+
+Renders a value like a link.
+
+```clj
+[`:gadget/link` "{100 keys}"]
+```
 
 ### Code
 
@@ -362,8 +375,11 @@ pairs:
 [:gadget/browser kv-coll]
 ```
 
-The keys should be some inline markup, while the values should be maps of
-`:actions` and `:hiccup`.
+`kv-coll` should be a collection of maps with keys `{:k :v :actions}` where:
+
+- `:k` is hiccup for the key/index
+- `:v` is hiccup for the value
+- `:actions` is an actions map - `:go` and `:copy` are currently supported
 
 ## Reference
 
