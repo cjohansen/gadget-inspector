@@ -312,9 +312,25 @@
   (or (not (ifn? inspectable?))
       (inspectable? (if (atom? ref) @ref ref))))
 
+(defn now []
+  #?(:cljs (js/Date.)
+     :clj (java.util.Date.)))
+
+(defn create-tx [label old-state new-state]
+  (let [prev-tx-data (get-in @store [:data label :gadget.tx/data])
+        limit (get-in @store [:config label :tx-limit] 100)
+        tx-data (:gadget.tx/data new-state)
+        valid-tx? (not= prev-tx-data tx-data)
+        tx (cond-> {:gadget.tx/instant (now)
+                    :gadget.tx/state new-state}
+             valid-tx? (assoc :gadget.tx/data tx-data))]
+    (swap! store update-in [:data label] update :txes (fn [txes]
+                                                        (take limit (conj txes tx))))))
+
 (defn inspect [label ref & [opts]]
   (when (atom? ref)
-    (add-watch ref :gadget/inspector (fn [_ _ _ new-state]
+    (add-watch ref :gadget/inspector (fn [_ _ old-state new-state]
+                                       (create-tx label old-state new-state)
                                        (when (inspectable? new-state opts)
                                          (render-inspector)))))
   (when (inspectable? ref opts)
