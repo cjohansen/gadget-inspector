@@ -7,7 +7,7 @@ html, body, pre {
   background: #f5f5f5;
 }
 
-.inspector tr:hover td {
+.inspector tbody tr:hover td {
   background: #ebf2fc;
 }
 
