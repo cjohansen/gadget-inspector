@@ -1,5 +1,5 @@
 (ns gadget.actions
-  (:require [gadget.core :refer [nav-in]]
+  (:require [gadget.datafy :refer [nav-in]]
             [gadget.std :refer [state-data]]))
 
 (defn to-clipboard [text]

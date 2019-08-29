@@ -163,12 +163,12 @@ well if you want to change how they are rendered.
 
 ### Type inferences
 
-New type inferences are added with `gadget.core/add-type-inference`:
+New type inferences are added with `gadget.datafy/add-type-inference`:
 
 ```clj
-(require '[gadget.core :as gadget])
+(require '[gadget.datafy :as datafy])
 
-(gadget/add-type-inference
+(datafy/add-type-inference
   (fn [data]
     (when (:person/id data)
       :person)))
@@ -212,11 +212,12 @@ As an example, let's consider how Gadget recognizes and navigates JWTs:
 
 ```clj
 (require '[clojure.string :as str]
-         '[gadget.core :as gadget])
+         '[gadget.core :as gadget]
+         '[gadget.datafy :as datafy])
 
 (def re-jwt #"^[A-Za-z0-9-_=]{4,}\.[A-Za-z0-9-_=]{4,}\.?[A-Za-z0-9-_.+/=]*$")
 
-(gadget/add-type-inference
+(datafy/add-type-inference
   (fn [data]
     (when (and (string? data) (re-find re-jwt data))
       :jwt)))
@@ -224,7 +225,7 @@ As an example, let's consider how Gadget recognizes and navigates JWTs:
 (defn- base64json [s]
   (-> s js/atob JSON.parse (js->clj :keywordize-keys true)))
 
-(defmethod gadget/datafy :jwt [token]
+(defmethod datafy/datafy :jwt [token]
   (let [[header data sig] (str/split token #"\.")]
     {:header (base64json header)
      :data (base64json data)
@@ -261,9 +262,9 @@ preserve with their literal form, such as
 Step 1 is to define the type inference:
 
 ```clj
-(require '[gadget.core :as gadget])
+(require '[gadget.datafy :as datafy])
 
-(gadget/add-type-inference
+(datafy/add-type-inference
   (fn [data]
     (when (and (string? data) (re-find #"^#time" data))
       :java-time-literal)))
@@ -293,9 +294,9 @@ then use that to power a `:full` view:
 
 ```clj
 (require '[clojure.string :as str]
-         '[gadget.core :as gadget])
+         '[gadget.datafy :as datafy])
 
-(defmethod gadget/datafy :java-time-literal [literal]
+(defmethod datafy/datafy :java-time-literal [literal]
   (let [[prefix str] (str/split raw " ")]
     (case prefix
       "#time/ld" (let [date-str (cljs.reader/read-string str)
@@ -404,7 +405,7 @@ until a non-nil value is returned. LIFO - the last registered inference will be
 tried first. The function should return `nil` for unknown values, otherwise a
 keyword that names the "type". Any other return value will cause an error.
 
-### `(gadget.core/datafy type [val])`
+### `(gadget.datafy/datafy type [val])`
 
 A wrapper around `clojure.datafy/datafy` that dispatches on Gadget's synthtic
 types. The default implementation calls `clojure.datafy/datafy`.

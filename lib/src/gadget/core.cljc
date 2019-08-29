@@ -1,9 +1,9 @@
 (ns gadget.core
   (:require #?(:cljs [cljs.reader :as reader])
             [clojure.string :as str]
-            [clojure.datafy :as datafy]
+            [gadget.datafy :as datafy]
             [gadget.actions :as actions]
-            [gadget.std :refer [date? debounce]]))
+            [gadget.std :refer [debounce]]))
 
 (defmulti render-data identity)
 
@@ -20,36 +20,6 @@
   (let [{:keys [action args]} (deserialize payload)]
     (reset! pending-action? true)
     (actions/exec-action store action args)))
-
-;; Type inference functions
-
-(def type-fns (atom nil))
-
-(defn add-type-inference [f]
-  (swap! type-fns conj f))
-
-(defn- symbolic-type [v]
-  (cond
-    (string? v) :string
-    (keyword? v) :keyword
-    (number? v) :number
-    (boolean? v) :boolean
-    (map? v) :map
-    (vector? v) :vector
-    (list? v) :list
-    (nil? v) :nil
-    (set? v) :set
-    (symbol? v) :symbol
-    (seq? v) :seq
-    (date? v) :date
-    :default :object))
-
-(defn synthetic-type [value]
-  (loop [[f & fs] @type-fns]
-    (or (when f (f value))
-        (if-let [fs (seq fs)]
-          (recur fs)
-          (symbolic-type value)))))
 
 ;; Sorting
 
@@ -81,27 +51,14 @@
   (let [ks (reverse ks)]
     (fn [[k v]] (- (.indexOf ks k)))))
 
-;; Data conversion and navigation
-
-(defmulti datafy (fn [data] (synthetic-type data)))
-
-(defmethod datafy :default [data]
-  (datafy/datafy data))
-
-(defn nav-in [data path]
-  (if-let [p (first path)]
-    (let [data (datafy data)]
-      (recur (datafy/nav data p (get data p)) (rest path)))
-    data))
-
 ;; Rendering
 
 (defmulti render (fn [view data] [view (:type data)]))
 
 (defn render-with-view [view label path raw]
   (render view {:raw raw
-                :type (synthetic-type raw)
-                :data (datafy raw)
+                :type (datafy/synthetic-type raw)
+                :data (datafy/datafy raw)
                 :label label
                 :path path}))
 
@@ -189,7 +146,7 @@
 
 (defn- summarize [pre c post & [w]]
   (let [num (count c)
-        types (into #{} (map synthetic-type c))
+        types (into #{} (map datafy/synthetic-type c))
         w (or w (if (= 1 (count types)) (name (first types)) "item"))]
     (str pre num " " (inflect num w) post)))
 
@@ -252,7 +209,7 @@
                  (map-indexed #(render-with-view :inline label (conj path %1) %2)))}])))
 
 (defmethod render :default [view v]
-  (let [t (symbolic-type (:data v))]
+  (let [t (datafy/symbolic-type (:data v))]
     (if (not= t (:type v))
       (render view (assoc v :type t))
       [:span {} (pr-str (:raw v))])))
@@ -270,7 +227,7 @@
         res))))
 
 (defn prepare-data [window {:keys [label path ref data]}]
-  (let [raw (nav-in (or (some-> ref deref) data) path)]
+  (let [raw (datafy/nav-in (or (some-> ref deref) data) path)]
     {:path (prepare-path (concat [label] path))
      :hiccup (render-with-view :full label path raw)
      :actions {:copy [[:copy-to-clipboard label path]]}}))
@@ -292,6 +249,8 @@
      render-data-now
      (debounce render-data-now ms))))
 
+(def render-count (atom 0))
+
 (defn render-inspector []
   (when @enabled?
     (let [render-fn (if @pending-action? render-data-now @render-data-debounced)]
@@ -299,6 +258,7 @@
         (reset! pending-action? false))
       (render-fn
        (fn []
+         (swap! render-count inc)
          (pr-str {:type :render
                   :data (prepare @store)}))))))
 

@@ -1,12 +1,13 @@
 (ns gadget.extensions
-  (:require [gadget.core :as gadget]
+  (:require [gadget.datafy :as datafy]
+            [gadget.core :as gadget]
             [clojure.string :as str]))
 
 ;; JWTs
 
 (def re-jwt #"^[A-Za-z0-9-_=]{4,}\.[A-Za-z0-9-_=]{4,}\.?[A-Za-z0-9-_.+/=]*$")
 
-(gadget/add-type-inference
+(datafy/add-type-inference
  (fn [v]
    (when (and (string? v) (re-find re-jwt v))
      :jwt)))
@@ -19,7 +20,7 @@
 (defn- base64json [s]
   #?(:cljs (-> s js/atob JSON.parse (js->clj :keywordize-keys true))))
 
-(defmethod gadget/datafy :jwt [token]
+(defmethod datafy/datafy :jwt [token]
   (let [[header data sig] (str/split token #"\.")]
     (with-meta
       {:header (base64json header)
@@ -38,7 +39,7 @@
 
 (def date-key-order [:iso :locale-date-string :time :timezone :year :month :date :timestamp])
 
-(defmethod gadget/datafy :date [date]
+(defmethod datafy/datafy :date [date]
   (with-meta
     (cond-> {:timestamp (.getTime date)
              :iso (.toISOString date)
