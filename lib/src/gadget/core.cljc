@@ -269,7 +269,7 @@
         (conj res {:text (str x)})
         res))))
 
-(defn prepare-data [{:keys [label path ref data]}]
+(defn prepare-data [window {:keys [label path ref data]}]
   (let [raw (nav-in (or (some-> ref deref) data) path)]
     {:path (prepare-path (concat [label] path))
      :hiccup (render-with-view :full label path raw)
@@ -278,7 +278,7 @@
 (defn prepare [state]
   {:data (->> (:data state)
               (sort-by first)
-              (map (comp prepare-data second)))})
+              (map (comp #(prepare-data (:window state) %) second)))})
 
 (defn render-data-now [f]
   (render-data f))

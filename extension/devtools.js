@@ -4,6 +4,30 @@ const konsole = chrome.extension.getBackgroundPage().console;
 var panelWindow;
 var queued;
 
+const debounce = (fn, delay) => {
+  var timeout;
+  return function () {
+    const args = arguments;
+    clearTimeout(timeout);
+    timeout = setTimeout(() => {
+      timeout = null;
+      fn.apply(null, args);
+    }, delay || 200);
+  };
+};
+
+const backgroundPageConnection = chrome.runtime.connect({
+  name: "devtools-page"
+});
+
+function setWindowSize(win) {
+  chrome.tabs.query({active: true, currentWindow: true}, tabs => {
+    chrome.tabs.sendMessage(
+      tabs[0].id,
+      `{:action :set-window-size :args [{:width ${win.innerWidth}, :height ${win.innerHeight}}]}`
+    );
+  });
+}
 
 chrome.devtools.panels.create(
   "CLJS Data",
@@ -14,6 +38,11 @@ chrome.devtools.panels.create(
       panel.onShown.removeListener(onShown);
       panelWindow = panelWin;
 
+      setWindowSize(panelWindow);
+
+      panelWindow.onresize = debounce(() => {
+        setWindowSize(panelWindow);
+      }, 150);
 
       if (queued) {
         panelWindow.receiveMessage(queued);
@@ -22,10 +51,6 @@ chrome.devtools.panels.create(
     });
   }
 );
-
-const backgroundPageConnection = chrome.runtime.connect({
-  name: "devtools-page"
-});
 
 backgroundPageConnection.postMessage({
   tabId: chrome.devtools.inspectedWindow.tabId,

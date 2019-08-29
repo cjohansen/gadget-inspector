@@ -21,7 +21,7 @@
   (to-clipboard (pr-str (nav-in (state-data @store label) path))))
 
 (defmethod exec-action :set-window-size [store _ [{:keys [width height]}]]
-  (prn "Set window size" width height))
+  (swap! store assoc :window {:width width :height height}))
 
 (defmethod exec-action :default [store action args]
   (prn "Unsupported action" action))
