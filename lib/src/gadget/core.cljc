@@ -75,23 +75,19 @@
   [:gadget/browser {:key (str label "-browser")
                     :data (prep-browser-entries label path data)}])
 
-(defmethod render [:full :map] [_ {:keys [label path data]}]
-  (let [sort-fn (if-let [f (-> data meta :gadget/sort)] (partial sort-by f) sort-keys)]
-    (->> data
-         sort-fn
-         (browser-data label path))))
+(defprotocol Browsable
+  :extend-via-metadata true
+  (entries [data] "Return a sorted seq of key value pairs for browsing"))
 
-(defmethod render [:full :vector] [_ {:keys [label path data]}]
-  (->> data
-       (map-indexed vector)
-       (sort-by first)
-       (browser-data label path)))
+(extend-type #?(:cljs cljs.core/PersistentVector
+                :clj clojure.lang.PersistentVector)
+  Browsable
+  (entries [m] (->> m (map-indexed vector) (sort-by first))))
 
-(defmethod render [:full :list] [_ {:keys [label path data]}]
-  (->> data
-       (map-indexed vector)
-       (sort-by first)
-       (browser-data label path)))
+(extend-type #?(:cljs cljs.core/List
+                :clj clojure.lang.PersistentList)
+  Browsable
+  (entries [m] (->> m (map-indexed vector) (sort-by first))))
 
 (def lazy-sample 1000)
 
@@ -210,9 +206,23 @@
 
 (defmethod render :default [view v]
   (let [t (datafy/symbolic-type (:data v))]
-    (if (not= t (:type v))
+    (cond
+      (not= t (:type v))
       (render view (assoc v :type t))
-      [:span {} (pr-str (:raw v))])))
+
+      (and (= :full view) (satisfies? Browsable (:data v)))
+      (browser-data (:label v) (:path v) (entries (:data v)))
+
+      ;; Handle the map default here instead of implementing the Browsable
+      ;; protocol for maps, because ClojureScript currently has a bug where you
+      ;; cannot override a protocol implementation on a type from metadata. This
+      ;; way, you can implement Browsable from metadata, and have that
+      ;; implementation override this default behavior.
+      (and (= :full view) (map? (:data v)))
+      (browser-data (:label v) (:path v) (sort-keys (:data v)))
+
+      :default
+      [:span {:style {:padding "6px"}} (pr-str (:raw v))])))
 
 (defn- prepare-path [path-elems]
   (loop [[x & xs] path-elems

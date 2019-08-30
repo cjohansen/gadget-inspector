@@ -312,10 +312,22 @@ that is converting a local date to an instant like this.
 ### Sorting
 
 When adding custom types for maps, you might want a different sorting than the
-default. By default, Gadget will sort keys roughly alphabetically. By attaching
-a function to the `:gadget/sort` key in the metadata on the map returned from
-`datafy`, Gadget will pass it to `sort-by`, and sort the map entries with this
-instead of the default strategy.
+default. By default, Gadget will try to sort keys alpha-numerically. You can
+override the default behavior by implementing the `gadget.core/Browsable`
+protocol. It defines a single method, `(entries [d])`, which takes the data
+(e.g. a map), and returns a vector of key value pairs, in preferred order. You
+can implement this for individual maps by including an implementation as
+metadata:
+
+```clj
+(def key-order [:preferred :order :of :keys])
+
+(defmethod gadget.datafy/datafy :my-type [m]
+  (with-meta
+    m
+    {`entries (fn [m]
+                (sort-by (gadget.core/key-order key-order)))}))
+```
 
 ## Components
 

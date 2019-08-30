@@ -20,13 +20,14 @@
 (defn- base64json [s]
   #?(:cljs (-> s js/atob JSON.parse (js->clj :keywordize-keys true))))
 
+(defrecord JWT [header data sig]
+  gadget/Browsable
+  (entries [jwt]
+    (sort-by (gadget/key-order [:header :data :signature]) jwt)))
+
 (defmethod datafy/datafy :jwt [token]
   (let [[header data sig] (str/split token #"\.")]
-    (with-meta
-      {:header (base64json header)
-       :data (base64json data)
-       :signature sig}
-      {:gadget/sort (gadget/key-order [:header :data :signature])})))
+    (JWT. (base64json header) (base64json data) sig)))
 
 ;; Dates
 
@@ -39,18 +40,22 @@
 
 (def date-key-order [:iso :locale-date-string :time :timezone :year :month :date :timestamp])
 
+(defrecord Instant [timestamp iso locale-date-string year month date time timezone]
+  gadget/Browsable
+  (entries [m]
+    (sort-by (gadget/key-order date-key-order) m)))
+
 (defmethod datafy/datafy :date [date]
-  (with-meta
-    (cond-> {:timestamp (.getTime date)
-             :iso (.toISOString date)
-             :locale-date-string #?(:cljs (.toLocaleDateString date "en-US" (clj->js {:weekday "long"
-                                                                                      :year "numeric"
-                                                                                      :month "long"
-                                                                                      :day "numeric"}))
-                                    :clj nil)
-             :year (+ 1900 (.getYear date))
-             :month (inc (.getMonth date))
-             :date (.getDate date)
-             :time (str (pad (.getHours date)) ":" (pad (.getMinutes date)) ":" (pad (.getSeconds date)))}
-      supports-intl? (assoc :timezone #?(:cljs (.. js/Intl DateTimeFormat resolvedOptions -timeZone))))
-    {:gadget/sort (gadget/key-order date-key-order)}))
+  (cond-> {:timestamp (.getTime date)
+           :iso (.toISOString date)
+           :locale-date-string #?(:cljs (.toLocaleDateString date "en-US" (clj->js {:weekday "long"
+                                                                                    :year "numeric"
+                                                                                    :month "long"
+                                                                                    :day "numeric"}))
+                                  :clj nil)
+           :year (+ 1900 (.getYear date))
+           :month (inc (.getMonth date))
+           :date (.getDate date)
+           :time (str (pad (.getHours date)) ":" (pad (.getMinutes date)) ":" (pad (.getSeconds date)))}
+    supports-intl? (assoc :timezone #?(:cljs (.. js/Intl DateTimeFormat resolvedOptions -timeZone)))
+    :always map->Instant))
