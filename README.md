@@ -421,3 +421,17 @@ keyword that names the "type". Any other return value will cause an error.
 
 A wrapper around `clojure.datafy/datafy` that dispatches on Gadget's synthtic
 types. The default implementation calls `clojure.datafy/datafy`.
+
+## Developing Gadget
+
+To develop gadget inspector, clone the repo and open
+[lib/deps.edn](lib/deps.edn). From there, open CIDER (assuming Emacs). If not in
+Emacs, you should be able to run a Figwheel REPL with:
+
+```
+clojure -A:dev -m figwheel.main --build dev --repl
+```
+
+The [lib/dev/gadget/dev.clj](dev namespace) provides some test data for you to
+play with. The REPL runs the inspector in a regular browser tab in
+[http://localhost:9570](http://localhost:9570).
