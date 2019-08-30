@@ -162,7 +162,7 @@
 
 (defmethod render [:inline :list] [_ {:keys [raw label path]}]
   (if (too-long-for-inline? raw)
-    [:gadget/link [:gadget/code {} (summarize "(" raw ")")]]
+    [:gadget/link [:gadget/code {} (summarize "'(" raw ")")]]
     [:gadget/inline-coll {:brackets ["'(" ")"]
                           :xs (map #(render-with-view :inline label path %) raw)}]))
 
