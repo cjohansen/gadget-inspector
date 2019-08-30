@@ -92,11 +92,13 @@
 (def lazy-sample 1000)
 
 ;; TODO: Add action to navigate further
-(defmethod render [:full :seq] [_ {:keys [label path data]}]
-  (->> (take lazy-sample data)
-       (map-indexed vector)
-       (sort-by first)
-       (browser-data label path)))
+(extend-type #?(:cljs cljs.core/LazySeq
+                :clj clojure.lang.LazySeq)
+  Browsable
+  (entries [s] (->> s
+                    (take lazy-sample)
+                    (map-indexed vector)
+                    (sort-by first))))
 
 (defmethod render [:inline :keyword] [_ {:keys [raw]}]
   [:gadget/keyword (pr-str raw)])
