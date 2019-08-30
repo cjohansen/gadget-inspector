@@ -236,10 +236,23 @@
         (conj res {:text (str x)})
         res))))
 
+(def rendered (atom {:data nil :hiccup nil}))
+
+(defn- get-data-hiccup [label path raw data]
+  (if (= data (:data @rendered))
+    (:hiccup @rendered)
+    (let [hiccup (render :full {:label label
+                                :path path
+                                :raw raw
+                                :data data
+                                :type (datafy/synthetic-type raw)})]
+      (reset! rendered {:data data :hiccup hiccup})
+      hiccup)))
+
 (defn prepare-data [window {:keys [label path ref data]}]
   (let [raw (datafy/nav-in (or (some-> ref deref) data) path)]
     {:path (prepare-path (concat [label] path))
-     :hiccup (render-with-view :full label path raw)
+     :hiccup (get-data-hiccup label path raw (datafy/datafy raw))
      :actions {:copy [[:copy-to-clipboard label path]]}}))
 
 (defn prepare [state]
@@ -259,8 +272,6 @@
      render-data-now
      (debounce render-data-now ms))))
 
-(def render-count (atom 0))
-
 (defn render-inspector []
   (when @enabled?
     (let [render-fn (if @pending-action? render-data-now @render-data-debounced)]
@@ -268,7 +279,6 @@
         (reset! pending-action? false))
       (render-fn
        (fn []
-         (swap! render-count inc)
          (pr-str {:type :render
                   :data (prepare @store)}))))))
 
