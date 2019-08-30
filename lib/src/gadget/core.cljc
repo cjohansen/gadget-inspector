@@ -238,18 +238,19 @@
         (conj res {:text (str x)})
         res))))
 
-(def rendered (atom {:data nil :hiccup nil}))
+(def rendered (atom {:data nil :hiccup nil :meta nil}))
 
 (defn- get-data-hiccup [label path raw data]
-  (if (= data (:data @rendered))
-    (:hiccup @rendered)
-    (let [hiccup (render :full {:label label
-                                :path path
-                                :raw raw
-                                :data data
-                                :type (datafy/synthetic-type raw)})]
-      (reset! rendered {:data data :hiccup hiccup})
-      hiccup)))
+  (let [state @rendered]
+    (if (and (= data (:data state)) (= (meta data) (:meta state)))
+      (:hiccup state)
+      (let [hiccup (render :full {:label label
+                                  :path path
+                                  :raw raw
+                                  :data data
+                                  :type (datafy/synthetic-type raw)})]
+        (reset! rendered {:data data :hiccup hiccup :meta (meta data)})
+        hiccup))))
 
 (defn prepare-data [window {:keys [label path ref data]}]
   (let [raw (datafy/nav-in (or (some-> ref deref) data) path)]
