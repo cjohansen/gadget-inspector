@@ -71,8 +71,9 @@
                  :actions {:go [[:set-path label target-path]]
                            :copy [[:copy-to-clipboard label target-path]]}})))))
 
-(defn- browser-data [label path data]
+(defn- browser-data [label path metadata data]
   [:gadget/browser {:key (str label "-browser")
+                    :metadata (prep-browser-entries label path metadata)
                     :data (prep-browser-entries label path data)}])
 
 (defprotocol Browsable
@@ -213,7 +214,7 @@
       (render view (assoc v :type t))
 
       (and (= :full view) (satisfies? Browsable (:data v)))
-      (browser-data (:label v) (:path v) (entries (:data v)))
+      (browser-data (:label v) (:path v) (meta (:data v)) (entries (:data v)))
 
       ;; Handle the map default here instead of implementing the Browsable
       ;; protocol for maps, because ClojureScript currently has a bug where you
@@ -221,7 +222,10 @@
       ;; way, you can implement Browsable from metadata, and have that
       ;; implementation override this default behavior.
       (and (= :full view) (map? (:data v)))
-      (browser-data (:label v) (:path v) (sort-keys (:data v)))
+      (browser-data (:label v) (:path v) (meta (:data v)) (sort-keys (:data v)))
+
+      (= :full view)
+      [:div {:style {:padding "6px"}} (render :inline v)]
 
       :default
       [:span {:style {:padding "6px"}} (pr-str (:raw v))])))
