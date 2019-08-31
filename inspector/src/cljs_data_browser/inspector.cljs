@@ -61,9 +61,9 @@
     (d/span {:style {:cursor "pointer"
                      :border "1px solid #999"
                      :borderRadius "3px"
-                     :padding "2px 3px"
-                     :background "#f9f9f9"}
+                     :padding "2px 3px"}
              :title "Copy data to clipboard"
+             :className "button"
              :onClick (fn [e]
                         (.preventDefault e)
                         (.stopPropagation e)
@@ -78,10 +78,11 @@
                     (fn [e]
                       (trigger-actions actions)))
          :style (when (:go actions) {:cursor "pointer"})}
-    (d/td {:style {:padding "5px" :whiteSpace "nowrap" :minWidth "200px"}}
+    (d/td {:style {:padding "5px 15px 5px 5px" :whiteSpace "nowrap"}}
       k)
     (d/td {:style {:padding "5px"
-                   :position "relative"}}
+                   :position "relative"
+                   :width "100%"}}
       v
       (d/div {:style {:position "absolute"
                       :right 0
@@ -95,7 +96,8 @@
    the path component will display the full path from the root of the map/seq,
    with navigation options along the way."
   [path]
-  (apply d/p {:style {:padding "0 0 0 5px"}}
+  (apply d/p {:style {:padding "0 0 0 5px"
+                      :margin "8px 0"}}
          (interpose " "
                     (map (fn [{:keys [text actions]}]
                            (if actions
@@ -103,21 +105,35 @@
                              (d/strong {} text)))
                          path))))
 
+(q/defcomponent Tab [{:keys [text active? actions]}]
+  [:span {:style (merge {:padding "3px 12px 4px"
+                         :display "inline-block"}
+                        (when active?
+                          {:borderBottom "2px solid #2376ef"
+                           :marginBottom "-1px"
+                           :paddingBottom "3px"}))
+          :className (when actions "tab-clickable")}
+   text])
+
 (q/defcomponent Header
   :keyfn #(str (-> % :path first :text) "-header")
   [{:keys [path actions]}]
-  (d/thead {}
-    (d/tr {}
-      (d/td {:colSpan 2}
-        (d/div {:style {:display "flex"
-                        :justifyContent "space-between"
-                        :alignItems "center"}}
-          (DataPath path)
-          (CopyButton (:copy actions)))))))
+  [:div
+   [:div {:style {:background "#f3f3f3"
+                  :borderBottom "1px solid #ccc"
+                  :display "flex"
+                  :justifyContent "space-between"}}
+    (map Tab [{:text "Browse" :active? true}])]
+   [:div {:style {:display "flex"
+                  :justifyContent "space-between"
+                  :alignItems "center"
+                  :borderBottom "1px solid #ccc"}}
+    [DataPath path]
+    [CopyButton (:copy actions)]]])
 
 (q/defcomponent Browser
   :keyfn :key
-  [{:keys [data]}]
+  [{:keys [meta data]}]
   (apply d/tbody {} (map Entry data)))
 
 (def component-map
@@ -132,20 +148,19 @@
    :gadget/date Date
    :gadget/code code})
 
-(q/defcomponent DataInspector
-  :keyfn #(str (-> % :path first :text) "-browser")
-  [{:keys [hiccup]}]
-  (w/postwalk #(get component-map % %) hiccup))
+(q/defcomponent DataInspector [data]
+  [:div {}
+   (Header data)
+   [:table {:style {:borderCollapse "collapse"
+                    :width "100%"
+                    :borderBottom "1px solid #ccc"}}
+    (w/postwalk #(get component-map % %) (:hiccup data))]])
 
 (q/defcomponent Inspector [{:keys [data]}]
-  (d/div {:className "inspector"
-          :style {:fontSize "12px"
-                  :fontFamily "helvetica neue, lucida grande, sans-serif"
-                  :lineHeight "1.5"
-                  :color "#333"
-                  :textShadow "0 1px 0 rgba(255, 255, 255, 0.6)"}}
-    (d/table {:style {:borderCollapse "collapse"
-                      :width "100%"}}
-      (mapcat vector
-              (map Header data)
-              (map DataInspector data)))))
+  [:div {:className "inspector"
+         :style {:fontSize "12px"
+                 :fontFamily "helvetica neue, lucida grande, sans-serif"
+                 :lineHeight "1.5"
+                 :color "#333"
+                 :textShadow "0 1px 0 rgba(255, 255, 255, 0.6)"}}
+   (map DataInspector data)])

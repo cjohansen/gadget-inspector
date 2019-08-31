@@ -18,3 +18,13 @@ html, body, pre {
 .inspector tr:hover .copy-btn {
   opacity: 1;
 }
+
+.button {
+  background: #f9f9f9;
+}
+
+.button:hover,
+.tab-clickable:hover {
+  background: #e6e6e6;
+  cursor: pointer;
+}
