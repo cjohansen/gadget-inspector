@@ -8,6 +8,13 @@
   (doseq [[action & args] actions]
     (actions/exec-action (pr-str {:action action :args args}))))
 
+(defn action-fn [actions]
+  (when actions
+    (fn [e]
+      (.preventDefault e)
+      (.stopPropagation e)
+      (trigger-actions actions))))
+
 (def code-styles
   {:fontFamily "menlo, lucida console, monospace"})
 
@@ -64,19 +71,14 @@
                      :padding "2px 3px"}
              :title "Copy data to clipboard"
              :className "button"
-             :onClick (fn [e]
-                        (.preventDefault e)
-                        (.stopPropagation e)
-                        (trigger-actions actions))}
+             :onClick (action-fn actions)}
       "copy")))
 
 (q/defcomponent Entry
   "An entry is one key/value pair (or index/value pair), formatted appropriately
   for their types"
   [{:keys [k v actions]}]
-  (d/tr {:onClick (when-let [actions (:go actions)]
-                    (fn [e]
-                      (trigger-actions actions)))
+  (d/tr {:onClick (action-fn (:go actions))
          :style (when (:go actions) {:cursor "pointer"})}
     (d/td {:style {:padding "5px 15px 5px 5px" :whiteSpace "nowrap"}}
       k)
