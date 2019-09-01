@@ -14,8 +14,8 @@
 
 (defmulti exec-action (fn [store action args] action))
 
-(defmethod exec-action :set-path [store _ [label path]]
-  (swap! store assoc-in [:data label :path] path))
+(defmethod exec-action :assoc-state [store _ [k v]]
+  (swap! store assoc-in (concat [:data] k) v))
 
 (defmethod exec-action :copy-to-clipboard [store _ [label path]]
   (to-clipboard (pr-str (nav-in (state-data @store label) path))))

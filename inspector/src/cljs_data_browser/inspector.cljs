@@ -98,14 +98,9 @@
    the path component will display the full path from the root of the map/seq,
    with navigation options along the way."
   [path]
-  (apply d/p {:style {:padding "0 0 0 5px"
-                      :margin "8px 0"}}
-         (interpose " "
-                    (map (fn [{:keys [text actions]}]
-                           (if actions
-                             (Button {:actions (:go actions) :content text})
-                             (d/strong {} text)))
-                         path))))
+  [:p {:style {:padding "0 0 0 5px"
+               :margin "8px 0"}}
+   path])
 
 (q/defcomponent Tab [{:keys [text active? actions]}]
   [:span {:style (merge {:padding "3px 12px 4px"
@@ -114,35 +109,41 @@
                           {:borderBottom "2px solid #2376ef"
                            :marginBottom "-1px"
                            :paddingBottom "3px"}))
-          :className (when actions "tab-clickable")}
+          :className (when actions "tab-clickable")
+          :onClick (action-fn actions)}
    text])
 
 (q/defcomponent Header
   :keyfn #(str (-> % :path first :text) "-header")
-  [{:keys [path actions]}]
+  [{:keys [path actions tabs]}]
   [:div
    [:div {:style {:background "#f3f3f3"
                   :borderBottom "1px solid #ccc"
                   :display "flex"
                   :justifyContent "space-between"}}
-    (map Tab [{:text "Browse" :active? true}])]
+    (map Tab tabs)]])
+
+(q/defcomponent Browser
+  :keyfn :key
+  [{:keys [metadata data path actions]}]
+  [:div
    [:div {:style {:display "flex"
                   :justifyContent "space-between"
                   :alignItems "center"
                   :borderBottom "1px solid #ccc"}}
     [DataPath path]
-    [CopyButton (:copy actions)]]])
+    [CopyButton (:copy actions)]]
+   [:table {:style {:borderCollapse "collapse"
+                    :width "100%"
+                    :borderBottom "1px solid #ccc"}}
+    [:tbody {} (map Entry data)]]])
 
-(q/defcomponent Browser
-  :keyfn :key
-  [{:keys [meta data]}]
-  [:table {:style {:borderCollapse "collapse"
-                   :width "100%"
-                   :borderBottom "1px solid #ccc"}}
-   [:tbody {} (map Entry data)]])
+(q/defcomponent Transactions [txes]
+  [:div {} "Transactions"])
 
 (def component-map
-  {:gadget/browser Browser
+  {:gadget/button Button
+   :gadget/browser Browser
    :gadget/string String
    :gadget/number Number
    :gadget/keyword KeywordValue
@@ -153,7 +154,7 @@
    :gadget/date Date
    :gadget/code code})
 
-(q/defcomponent DataInspector [data]
+(q/defcomponent DataPanel [data]
   [:div {}
    (Header data)
    (w/postwalk #(get component-map % %) (:hiccup data))])
@@ -165,4 +166,4 @@
                  :lineHeight "1.5"
                  :color "#333"
                  :textShadow "0 1px 0 rgba(255, 255, 255, 0.6)"}}
-   (map DataInspector data)])
+   (map DataPanel data)])

@@ -68,13 +68,28 @@
               (let [target-path (conj path k)]
                 {:k (render-with-view :inline label path k)
                  :v (render-with-view :inline label target-path v)
-                 :actions {:go [[:set-path label target-path]]
+                 :actions {:go [[:assoc-state [label :path] target-path]]
                            :copy [[:copy-to-clipboard label target-path]]}})))))
+
+(defn- prepare-path [path-elems]
+  (loop [[x & xs] path-elems
+         path []
+         res [:div {}]]
+    (if (seq xs)
+      (let [path (conj path x)
+            button {:actions [[:assoc-state [(first path) :path] (into [] (rest path))]]
+                    :content (str x)}]
+        (recur (vec xs) path (conj res [:gadget/button button] " ")))
+      (if x
+        (conj res [:strong {} (str x)] " ")
+        res))))
 
 (defn- browser-data [label path metadata data]
   [:gadget/browser {:key (str label "-browser")
                     :metadata (prep-browser-entries label path metadata)
-                    :data (prep-browser-entries label path data)}])
+                    :data (prep-browser-entries label path data)
+                    :path (prepare-path (concat [label] path))
+                    :actions {:copy [[:copy-to-clipboard label path]]}}])
 
 (defprotocol Browsable
   :extend-via-metadata true
@@ -230,21 +245,9 @@
       :default
       [:span {:style {:padding "6px"}} (pr-str (:raw v))])))
 
-(defn- prepare-path [path-elems]
-  (loop [[x & xs] path-elems
-         path []
-         res []]
-    (if (seq xs)
-      (let [path (conj path x)]
-        (recur (vec xs) path (conj res {:text (str x)
-                                        :actions {:go [[:set-path (first path) (into [] (rest path))]]}})))
-      (if x
-        (conj res {:text (str x)})
-        res))))
-
 (def rendered (atom {:data nil :hiccup nil :meta nil}))
 
-(defn- get-data-hiccup [label path raw data]
+(defn- browser-hiccup [label path raw data]
   (let [state @rendered]
     (if (and (= data (:data state)) (= (meta data) (:meta state)))
       (:hiccup state)
@@ -256,11 +259,20 @@
         (reset! rendered {:data data :hiccup hiccup :meta (meta data)})
         hiccup))))
 
-(defn prepare-data [window {:keys [label path ref data]}]
-  (let [raw (datafy/nav-in (or (some-> ref deref) data) path)]
-    {:path (prepare-path (concat [label] path))
-     :hiccup (get-data-hiccup label path raw (datafy/datafy raw))
-     :actions {:copy [[:copy-to-clipboard label path]]}}))
+(defn prepare-txes [label txes]
+  [])
+
+(defn prepare-data [window {:keys [label path ref data txes] :as state}]
+  (let [raw (datafy/nav-in (or (some-> ref deref) data) path)
+        current-tab (get state :current-tab)]
+    {;;:txes (prepare-txes label txes)
+     :tabs (concat
+            [{:text "Browse" :active? true}]
+            (when ref
+              [{:text "Transactions"
+                :actions [[:toggle-txes label (not= current-tab :txes)]]
+                :active? (= current-tab :txes)}]))
+     :hiccup (browser-hiccup label path raw (datafy/datafy raw))}))
 
 (defn prepare [state]
   {:data (->> (:data state)
@@ -311,8 +323,7 @@
         tx (cond-> {:gadget.tx/instant (now)
                     :gadget.tx/state new-state}
              valid-tx? (assoc :gadget.tx/data tx-data))]
-    (swap! store update-in [:data label] update :txes (fn [txes]
-                                                        (take limit (conj txes tx))))))
+    (swap! store update-in [:data label] update :txes #(take limit (conj % tx)))))
 
 (defn inspect [label ref & [opts]]
   (when (atom? ref)
@@ -320,12 +331,15 @@
                                        (create-tx label old-state new-state)
                                        (when (inspectable? new-state opts)
                                          (render-inspector)))))
+  (when (atom? ref)
+    (create-tx label nil @ref))
   (when (inspectable? ref opts)
-    (swap! store update :data assoc label (merge {:label label :path []}
-                                                 (select-keys (get-in @store [:data label]) [:path])
-                                                 (if (atom? ref)
-                                                   {:ref ref}
-                                                   {:data ref}))))
+    (swap! store update :data assoc label (merge
+                                           {:path [] :label label}
+                                           (get-in @store [:data label])
+                                           (if (atom? ref)
+                                             {:ref ref}
+                                             {:data ref}))))
   nil)
 
 (defn create-atom [label & [val]]
