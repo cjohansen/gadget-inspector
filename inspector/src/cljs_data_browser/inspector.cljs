@@ -136,7 +136,10 @@
 (q/defcomponent Browser
   :keyfn :key
   [{:keys [meta data]}]
-  (apply d/tbody {} (map Entry data)))
+  [:table {:style {:borderCollapse "collapse"
+                   :width "100%"
+                   :borderBottom "1px solid #ccc"}}
+   [:tbody {} (map Entry data)]])
 
 (def component-map
   {:gadget/browser Browser
@@ -153,10 +156,7 @@
 (q/defcomponent DataInspector [data]
   [:div {}
    (Header data)
-   [:table {:style {:borderCollapse "collapse"
-                    :width "100%"
-                    :borderBottom "1px solid #ccc"}}
-    (w/postwalk #(get component-map % %) (:hiccup data))]])
+   (w/postwalk #(get component-map % %) (:hiccup data))])
 
 (q/defcomponent Inspector [{:keys [data]}]
   [:div {:className "inspector"
