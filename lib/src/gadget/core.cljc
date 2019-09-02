@@ -298,9 +298,11 @@
 
 (defn prepare-data [window {:keys [label path ref data txes] :as state}]
   (let [raw (datafy/nav-in (or (some-> ref deref) data) path)
-        current-tab (get state :current-tab :browser)]
+        current-tab (get state :current-tab :browser)
+        expanded? (get state :expanded? true)]
     {:tabs (concat
-            [{:text [:strong label]}
+            [{:text [:strong label]
+              :actions [[:assoc-state [label :expanded?] (not expanded?)]]}
              {:text "Browse"
               :active? (= :browser current-tab)
               :actions [[:assoc-state [label :current-tab] :browser]]}]
@@ -308,9 +310,10 @@
               [{:text "Transactions"
                 :actions [[:assoc-state [label :current-tab] :txes]]
                 :active? (= current-tab :txes)}]))
-     :hiccup (if (= :txes current-tab)
-               (tx-hiccup txes)
-               (browser-hiccup label path raw (datafy/datafy raw)))}))
+     :hiccup (when expanded?
+               (if (= :txes current-tab)
+                 (tx-hiccup txes)
+                 (browser-hiccup label path raw (datafy/datafy raw))))}))
 
 (defn prepare [state]
   {:data (->> (:data state)

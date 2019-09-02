@@ -64,7 +64,7 @@
    v])
 
 (q/defcomponent CopyButton [actions]
-  (d/div {:style {:padding "0 5px"}}
+  (d/div {:style {:padding "0 12px"}}
     (d/span {:style {:cursor "pointer"
                      :border "1px solid #999"
                      :borderRadius "3px"
@@ -80,7 +80,7 @@
   [{:keys [k v actions]}]
   (d/tr {:onClick (action-fn (:go actions))
          :style (when (:go actions) {:cursor "pointer"})}
-    (d/td {:style {:padding "5px 15px 5px 5px" :whiteSpace "nowrap"}}
+    (d/td {:style {:padding "5px 12px" :whiteSpace "nowrap"}}
       k)
     (d/td {:style {:padding "5px"
                    :position "relative"
@@ -98,7 +98,7 @@
    the path component will display the full path from the root of the map/seq,
    with navigation options along the way."
   [path]
-  [:p {:style {:padding "0 0 0 5px"
+  [:p {:style {:padding "0 0 0 12px"
                :margin "8px 0"}}
    path])
 
@@ -133,25 +133,20 @@
     [DataPath path]
     [CopyButton (:copy actions)]]
    [:table {:style {:borderCollapse "collapse"
-                    :width "100%"
-                    :borderBottom "1px solid #ccc"}}
+                    :width "100%"}}
     [:tbody {} (map Entry data)]]])
 
 (q/defcomponent TxList
   :keyfn :key
   [txes]
   [:table {:style {:borderCollapse "collapse"
-                   :width "100%"
-                   :borderBottom "1px solid #ccc"}}
+                   :width "100%"}}
    [:tbody {}
     (map #(d/tr {}
-            (d/td {:style {:padding "5px"
+            (d/td {:style {:padding "5px 5px 5px 12px"
                            :whiteSpace "nowrap"
                            :width "100%"}}
               %)) txes)]])
-
-(q/defcomponent Transactions [txes]
-  [:div {} "Transactions"])
 
 (def component-map
   {:gadget/button Button
@@ -168,7 +163,7 @@
    :gadget/code code})
 
 (q/defcomponent DataPanel [data]
-  [:div {}
+  [:div {:style {:borderBottom "1px solid #ccc"}}
    (Header data)
    (w/postwalk #(get component-map % %) (:hiccup data))])
 
