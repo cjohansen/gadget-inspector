@@ -63,8 +63,8 @@
                 :path path}))
 
 (def bespoke-labels
-  {:gadget/value "Value"
-   :gadget/type "Type"})
+  {:gadget/value 'Value
+   :gadget/type 'Type})
 
 (defn prep-browser-entries [label path entries]
   (->> entries
