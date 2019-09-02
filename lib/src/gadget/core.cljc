@@ -3,7 +3,7 @@
             [clojure.string :as str]
             [gadget.datafy :as datafy]
             [gadget.actions :as actions]
-            [gadget.std :refer [debounce]]))
+            [gadget.std :refer [debounce pad]]))
 
 (defmulti render-data identity)
 
@@ -62,14 +62,19 @@
                 :label label
                 :path path}))
 
+(def bespoke-labels
+  {:gadget/value "Value"
+   :gadget/type "Type"})
+
 (defn prep-browser-entries [label path entries]
   (->> entries
        (map (fn [[k v]]
               (let [target-path (conj path k)]
-                {:k (render-with-view :inline label path k)
+                {:k (render-with-view :inline label path (get bespoke-labels k k))
                  :v (render-with-view :inline label target-path v)
-                 :actions {:go [[:assoc-state [label :path] target-path]]
-                           :copy [[:copy-to-clipboard label target-path]]}})))))
+                 :actions (when-not (contains? bespoke-labels k)
+                            {:go [[:assoc-state [label :path] target-path]]
+                             :copy [[:copy-to-clipboard label target-path]]})})))))
 
 (defn- prepare-path [path-elems]
   (loop [[x & xs] path-elems
@@ -228,19 +233,25 @@
       (not= t (:type v))
       (render view (assoc v :type t))
 
-      (and (= :full view) (satisfies? Browsable (:data v)))
-      (browser-data (:label v) (:path v) (meta (:data v)) (entries (:data v)))
-
-      ;; Handle the map default here instead of implementing the Browsable
-      ;; protocol for maps, because ClojureScript currently has a bug where you
-      ;; cannot override a protocol implementation on a type from metadata. This
-      ;; way, you can implement Browsable from metadata, and have that
-      ;; implementation override this default behavior.
-      (and (= :full view) (map? (:data v)))
-      (browser-data (:label v) (:path v) (meta (:data v)) (sort-keys (:data v)))
-
       (= :full view)
-      [:div {:style {:padding "6px"}} (render :inline v)]
+      (->> (cond
+             (satisfies? Browsable (:data v)) (entries (:data v))
+
+             ;; Handle the map default here instead of implementing the Browsable
+             ;; protocol for maps, because ClojureScript currently has a bug where you
+             ;; cannot override a protocol implementation on a type from metadata. This
+             ;; way, you can implement Browsable from metadata, and have that
+             ;; implementation override this default behavior.
+             (map? (:data v))
+             (sort-keys (:data v))
+
+             :default
+             [[:gadget/type (let [t (datafy/symbolic-type (:data v))]
+                              (if (= :object t)
+                                (constructor (:data v))
+                                t))]
+              [:gadget/value (:data v)]])
+           (browser-data (:label v) (:path v) (meta (:data v))))
 
       :default
       [:span {:style {:padding "6px"}} (pr-str (:raw v))])))
@@ -259,20 +270,47 @@
         (reset! rendered {:data data :hiccup hiccup :meta (meta data)})
         hiccup))))
 
-(defn prepare-txes [label txes]
-  [])
+(defn tx-summary [tx]
+  (some->> (:gadget.tx/data tx)
+           (render-with-view :inline "tx" [])))
+
+(defn same-date? [a b]
+  (and (= (.getYear a) (.getYear b))
+       (= (.getMonth a) (.getMonth b))
+       (= (.getDate a) (.getDate b))))
+
+(defn tx-hiccup [txes]
+  (let [now #?(:cljs (js/Date.)
+               :clj (java.util.Date.))]
+    [:gadget/tx-list
+     (map #(let [{:gadget.tx/keys [instant]} %]
+             [:div {}
+              [:strong {}
+               (when-not (same-date? instant now)
+                 (str (+ 1900 (.getYear instant)) "-"
+                      (pad (inc (.getMonth instant))) "-"
+                      (pad (.getDate instant)) " "))
+               (str (pad (.getHours instant)) ":"
+                    (pad (.getMinutes instant)) ":"
+                    (pad (.getSeconds instant)) " ")]
+              (tx-summary %)])
+          txes)]))
 
 (defn prepare-data [window {:keys [label path ref data txes] :as state}]
   (let [raw (datafy/nav-in (or (some-> ref deref) data) path)
-        current-tab (get state :current-tab)]
-    {;;:txes (prepare-txes label txes)
-     :tabs (concat
-            [{:text "Browse" :active? true}]
+        current-tab (get state :current-tab :browser)]
+    {:tabs (concat
+            [{:text [:strong label]}
+             {:text "Browse"
+              :active? (= :browser current-tab)
+              :actions [[:assoc-state [label :current-tab] :browser]]}]
             (when ref
               [{:text "Transactions"
-                :actions [[:toggle-txes label (not= current-tab :txes)]]
+                :actions [[:assoc-state [label :current-tab] :txes]]
                 :active? (= current-tab :txes)}]))
-     :hiccup (browser-hiccup label path raw (datafy/datafy raw))}))
+     :hiccup (if (= :txes current-tab)
+               (tx-hiccup txes)
+               (browser-hiccup label path raw (datafy/datafy raw)))}))
 
 (defn prepare [state]
   {:data (->> (:data state)

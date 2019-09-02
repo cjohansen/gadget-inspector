@@ -21,3 +21,8 @@
 (defn state-data [state label]
   (let [{:keys [ref data]} (get-in state [:data label])]
     (if ref @ref data)))
+
+(defn pad [n]
+  (if (< n 10)
+    (str "0" n)
+    (str n)))

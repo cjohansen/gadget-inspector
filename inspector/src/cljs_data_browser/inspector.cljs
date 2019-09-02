@@ -91,7 +91,7 @@
                       :top 5
                       :transition "opacity 0.25s"}
               :className "copy-btn"}
-        (CopyButton (:copy actions))))))
+        (some-> (:copy actions) CopyButton)))))
 
 (q/defcomponent DataPath
   "The heading and current path in the data. When browsing nested maps and lists,
@@ -119,8 +119,7 @@
   [:div
    [:div {:style {:background "#f3f3f3"
                   :borderBottom "1px solid #ccc"
-                  :display "flex"
-                  :justifyContent "space-between"}}
+                  :display "flex"}}
     (map Tab tabs)]])
 
 (q/defcomponent Browser
@@ -138,12 +137,26 @@
                     :borderBottom "1px solid #ccc"}}
     [:tbody {} (map Entry data)]]])
 
+(q/defcomponent TxList
+  :keyfn :key
+  [txes]
+  [:table {:style {:borderCollapse "collapse"
+                   :width "100%"
+                   :borderBottom "1px solid #ccc"}}
+   [:tbody {}
+    (map #(d/tr {}
+            (d/td {:style {:padding "5px"
+                           :whiteSpace "nowrap"
+                           :width "100%"}}
+              %)) txes)]])
+
 (q/defcomponent Transactions [txes]
   [:div {} "Transactions"])
 
 (def component-map
   {:gadget/button Button
    :gadget/browser Browser
+   :gadget/tx-list TxList
    :gadget/string String
    :gadget/number Number
    :gadget/keyword KeywordValue

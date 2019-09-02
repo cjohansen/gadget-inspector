@@ -1,6 +1,7 @@
 (ns gadget.extensions
   (:require [gadget.datafy :as datafy]
             [gadget.core :as gadget]
+            [gadget.std :refer [pad]]
             [clojure.string :as str]))
 
 ;; JWTs
@@ -32,12 +33,6 @@
 ;; Dates
 
 (def supports-intl? #?(:cljs (and js/window.Intl js/window.Intl.DateTimeFormat)))
-
-(defn- pad [n]
-  (if (< n 10)
-    (str "0" n)
-    (str n)))
-
 (def date-key-order [:iso :locale-date-string :time :timezone :year :month :date :timestamp])
 
 (defrecord Instant [timestamp iso locale-date-string year month date time timezone]
