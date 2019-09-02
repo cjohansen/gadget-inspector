@@ -118,7 +118,6 @@
   [{:keys [path actions tabs]}]
   [:div
    [:div {:style {:background "#f3f3f3"
-                  :borderBottom "1px solid #ccc"
                   :display "flex"}}
     (map Tab tabs)]])
 
@@ -165,7 +164,9 @@
 (q/defcomponent DataPanel [data]
   [:div {:style {:borderBottom "1px solid #ccc"}}
    (Header data)
-   (w/postwalk #(get component-map % %) (:hiccup data))])
+   (when-let [hiccup (:hiccup data)]
+     [:div {:style {:borderTop "1px solid #ccc"}}
+      (w/postwalk #(get component-map % %) (:hiccup data))])])
 
 (q/defcomponent Inspector [{:keys [data]}]
   [:div {:className "inspector"
