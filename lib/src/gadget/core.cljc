@@ -298,10 +298,10 @@
 
 (defn prepare-data [window {:keys [label path ref data txes] :as state}]
   (let [raw (datafy/nav-in (or (some-> ref deref) data) path)
-        current-tab (get state :current-tab :browser)
-        expanded? (get state :expanded? true)]
+        expanded? (get state :expanded? true)
+        current-tab (when expanded? (get state :current-tab :browser))]
     {:tabs (concat
-            [{:text [:strong label]
+            [{:text (if expanded? [:strong label] label)
               :actions [[:assoc-state [label :expanded?] (not expanded?)]]}
              {:text "Browse"
               :active? (= :browser current-tab)
