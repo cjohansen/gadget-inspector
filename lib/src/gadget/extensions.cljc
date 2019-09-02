@@ -54,3 +54,10 @@
            :time (str (pad (.getHours date)) ":" (pad (.getMinutes date)) ":" (pad (.getSeconds date)))}
     supports-intl? (assoc :timezone #?(:cljs (.. js/Intl DateTimeFormat resolvedOptions -timeZone)))
     :always map->Instant))
+
+;; JavaScript Objects
+
+(defmethod datafy/datafy :object [obj]
+  (->> #?(:cljs (js/Object.keys obj))
+       (map (fn [k] [(symbol k) (aget obj k)]))
+       (into {})))
