@@ -20,6 +20,9 @@ from Clojars:
 cjohansen/gadget-inspector {:mvn/version "0.2019.08.28"}
 ```
 
+*NB!* Gadget requires `clojure.datafy`, and will only work with ClojureScript
+1.9.520 or newer.
+
 Then, either create your app-wide atom with the inspector, or inspect an
 existing atom:
 
