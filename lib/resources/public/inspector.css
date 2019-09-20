@@ -3,11 +3,11 @@ html, body, pre {
   margin: 0;
 }
 
-.inspector tbody tr:nth-child(2n + 1) td {
+.inspector tbody > tr:nth-child(2n + 1) > td {
   background: #f5f5f5;
 }
 
-.inspector tbody tr:hover td {
+.inspector tbody tr:hover > td {
   background: #ebf2fc;
 }
 
@@ -15,7 +15,7 @@ html, body, pre {
   opacity: 0;
 }
 
-.inspector tr:hover .copy-btn {
+.inspector tr:hover > td > .copy-btn {
   opacity: 1;
 }
 
