@@ -1,6 +1,7 @@
 html, body, pre {
   padding: 0;
   margin: 0;
+  background: #fff;
 }
 
 .inspector tbody > tr:nth-child(2n + 1) > td {
