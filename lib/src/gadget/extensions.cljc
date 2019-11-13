@@ -6,13 +6,6 @@
 
 ;; JWTs
 
-(def re-jwt #"^[A-Za-z0-9-_=]{4,}\.[A-Za-z0-9-_=]{4,}\.?[A-Za-z0-9-_.+/=]*$")
-
-(datafy/add-type-inference
- (fn [v]
-   (when (and (string? v) (re-find re-jwt v))
-     :jwt)))
-
 (defmethod gadget/render [:inline :jwt] [_ {:keys [raw]}]
   [:span {}
    [:strong {} "JWT: "]
@@ -26,9 +19,25 @@
   (entries [jwt]
     (sort-by (gadget/key-order [:header :data :signature]) jwt)))
 
-(defmethod datafy/datafy :jwt [token]
+(defn parse-jwt [token]
   (let [[header data sig] (str/split token #"\.")]
     (JWT. (base64json header) (base64json data) sig)))
+
+(defmethod datafy/datafy :jwt [token]
+  (parse-jwt token))
+
+(def re-jwt #"^[A-Za-z0-9-_=]{4,}\.[A-Za-z0-9-_=]{4,}\.?[A-Za-z0-9-_.+/=]*$")
+
+(datafy/add-type-inference
+ (fn [v]
+   (when (and (string? v)
+              (re-find re-jwt v)
+              (try ;; The regex inference is pretty weak. If it can't be parsed,
+                   ;; it's likely not a JWT
+                (parse-jwt v)
+                (catch :default e
+                  nil)))
+     :jwt)))
 
 ;; Dates
 
