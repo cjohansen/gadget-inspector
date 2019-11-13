@@ -17,7 +17,7 @@ You need the small agent library to expose data for inspection. It is available
 from Clojars:
 
 ```sh
-cjohansen/gadget-inspector {:mvn/version "0.2019.09.20"}
+cjohansen/gadget-inspector {:mvn/version "0.2019.11.13"}
 ```
 
 *NB!* Gadget requires `clojure.datafy`, and will only work with ClojureScript
