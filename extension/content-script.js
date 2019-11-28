@@ -15,14 +15,15 @@ script.onload = () => script.parentNode.removeChild(script);
 
 window.addEventListener('message', event => {
   if (event.data.id === "cljs-data-browser") {
-    chrome.runtime.sendMessage(event.data);
+    browser.runtime.sendMessage(event.data);
   }
 });
 
-chrome.extension.onMessage.addListener((msg, sender, sendResponse) => {
+browser.runtime.onMessage.addListener((msg) => {
   window.postMessage({
     id: "cljs-data-browser-action",
-    message: msg
+    message: msg.message
   }, "*");
 });
 
+console.log("Plugin gadget-browser initialized successfully")

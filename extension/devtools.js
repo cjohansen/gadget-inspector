@@ -1,6 +1,6 @@
 /*global chrome*/
 
-const konsole = chrome.extension.getBackgroundPage().console;
+const konsole = console;
 var panelWindow;
 var queued;
 
@@ -16,20 +16,20 @@ const debounce = (fn, delay) => {
   };
 };
 
-const backgroundPageConnection = chrome.runtime.connect({
+const backgroundPageConnection = browser.runtime.connect({
   name: "devtools-page"
 });
 
 function setWindowSize(win) {
-  chrome.tabs.query({active: true, currentWindow: true}, tabs => {
-    chrome.tabs.sendMessage(
-      tabs[0].id,
-      `{:action :set-window-size :args [{:width ${win.innerWidth}, :height ${win.innerHeight}}]}`
-    );
+  backgroundPageConnection.postMessage({
+    tabId: browser.devtools.inspectedWindow.tabId,
+    name: "resize",
+    height: win.innerHeight,
+    width: win.innerWidth
   });
 }
 
-chrome.devtools.panels.create(
+browser.devtools.panels.create(
   "CLJS Data",
   "",
   "panel.html",
@@ -37,7 +37,7 @@ chrome.devtools.panels.create(
     panel.onShown.addListener(function onShown(panelWin) {
       panel.onShown.removeListener(onShown);
       panelWindow = panelWin;
-
+  
       setWindowSize(panelWindow);
 
       panelWindow.onresize = debounce(() => {
@@ -53,11 +53,11 @@ chrome.devtools.panels.create(
 );
 
 backgroundPageConnection.postMessage({
-  tabId: chrome.devtools.inspectedWindow.tabId,
+  tabId: browser.devtools.inspectedWindow.tabId,
   name: "init"
 });
 
-chrome.devtools.network.onNavigated.addListener(url => {
+browser.devtools.network.onNavigated.addListener(url => {
   if (panelWindow) {
     panelWindow.receiveMessage({
       request: {

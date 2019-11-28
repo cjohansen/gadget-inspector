@@ -4,16 +4,16 @@
 
 (set! *warn-on-infer* true)
 
-(def console (.. js/chrome -extension getBackgroundPage -console))
+(def console (.. js/window -console))
 
 (defn log [& args]
   (apply console.log args))
 
 (defmethod actions/exec-action :default [payload]
-  (js/chrome.tabs.query
-   #js {:active true :currentWindow true}
-   (fn [tabs]
-     (js/chrome.tabs.sendMessage (.-id (aget tabs 0)) payload))))
+   (let [msg #js {"id" "cljs-data-browser-2"
+                  "tabId" js/browser.devtools.inspectedWindow.tabId
+                  "payload" payload}]
+        (js/browser.runtime.sendMessage msg)))
 
 (set! js/window.receiveMessage
       (fn [message]

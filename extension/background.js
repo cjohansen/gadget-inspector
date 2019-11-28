@@ -3,7 +3,7 @@
 const connections = {};
 const queue = {};
 
-chrome.runtime.onConnect.addListener(port => {
+browser.runtime.onConnect.addListener(port => {
   const extensionListener = (message, sender, sendResponse) => {
     if (message.name == "init") {
       connections[message.tabId] = port;
@@ -32,7 +32,7 @@ chrome.runtime.onConnect.addListener(port => {
   });
 });
 
-chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
+browser.runtime.onMessage.addListener((request, sender, sendResponse) => {
   if (sender.tab && request.id == "cljs-data-browser") {
     const tabId = sender.tab.id;
 
@@ -42,6 +42,17 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     } else {
       console.log("Queue message from", sender.tab.id);
       queue[sender.tab.id] = [request];
+    }
+  }
+  else if (request.id == "cljs-data-browser-2") {
+    const {id, tabId, payload} = request;
+    if (tabId && id === 'cljs-data-browser-2') {
+      console.log('Instantly relay message from', tabId);
+      browser.tabs.sendMessage(
+        tabId,
+        {message: payload}
+      );
+      
     }
   }
 
