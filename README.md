@@ -1,8 +1,8 @@
 # ClojureScript Data Browser
 
 Developer tooling for inspecting ClojureScript data structures from running
-programs. Inspect data in devtools using the Chrome extension, or in any other
-browser using the remote inspector.
+programs. Inspect data in devtools using the Chrome or Firefox extension, or
+in any other browser using the remote inspector.
 
 ## WARNING
 
@@ -138,6 +138,25 @@ corner. Select the `extension` directory in this repository.
 Load your page, open devtools, and then click on the `CLJS Data` panel. Rejoice.
 *NB!* If you've had devtools open since installing the extension, you might need
 to toggle it once.
+
+## Using the Firefox Developer Edition extension
+
+Build with
+
+```sh
+make firefox.xpi
+```
+
+Firefox requires that extensions are signed, which this obviously is not. So
+Firefox proper will not allow installation. However the amazing [Firefox
+Developer Edition will](https://www.mozilla.org/en-US/firefox/developer/).
+
+You need to allow unsigned extensions. This is done in [about:config](about:config).
+Toggle `xpinstall.signatures.required` to false. Then open settings/extensions and
+find the "Install from file" button. Then select firefox.xpi, and you should be good
+to go!
+
+Load your page, open devtools, and then click on the `CLJS Data` panel. Rejoice.
 
 ## Using the remote inspector
 
