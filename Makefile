@@ -41,7 +41,10 @@ lib/target/gadget-inspector.jar: lib/target lib/src/**/*.*
 deploy: lib/target/gadget-inspector.jar
 	cd lib && mvn deploy:deploy-file -Dfile=target/gadget-inspector.jar -DrepositoryId=clojars -Durl=https://clojars.org/repo -DpomFile=pom.xml
 
+firefox.xpi: extension
+	cd extension && zip ../firefox.xpi * && cd -
+
 clean:
-	rm -fr remote/static/assets inspector/target extension/panel.js extension/panel.js.map extension/inspector.css lib/target
+	rm -fr remote/static/assets inspector/target extension/panel.js extension/panel.js.map extension/inspector.css lib/target firefox.xpi
 
 .PHONY: remote-inspector remote-server deploy clean
