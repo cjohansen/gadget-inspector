@@ -1,4 +1,10 @@
 {
+  "browser_specific_settings": {
+    "gecko": {
+      "id": "christian@cjohansen.no",
+      "strict_min_version": "71.0"
+    }
+  },
   "name": "ClojureScript Data Browser",
   "version": "1.0",
   "description": "Browse the contents of ClojureScript data, browse and restore historic atom states",
