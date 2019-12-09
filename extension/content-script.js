@@ -42,7 +42,7 @@ window.addEventListener('message', event => {
 ua.runtime.onMessage.addListener(msg => {
   window.postMessage({
     id: "cljs-data-browser-action",
-    message: msg.message
+    message: msg
   }, "*");
 });
 

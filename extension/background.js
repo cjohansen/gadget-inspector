@@ -7,13 +7,6 @@ ua.runtime.onConnect.addListener(port => {
   const extensionListener = (message, sender, sendResponse) => {
     if (message.name == "init") {
       connections[message.tabId] = port;
-
-      if (queue[message.tabId]) {
-        console.log("Relaying %d queued messages", queue[message.tabId].length);
-        while (queue[message.tabId].length > 0) {
-          port.postMessage(queue[message.tabId].shift());
-        }
-      }
     }
   };
 
@@ -32,28 +25,12 @@ ua.runtime.onConnect.addListener(port => {
   });
 });
 
-  if (sender.tab && request.id == "cljs-data-browser") {
 ua.runtime.onMessage.addListener((request, sender, sendResponse) => {
-    const tabId = sender.tab.id;
+  const tabId = sender.tab.id;
 
-    if (tabId in connections) {
-      console.log("Instantly relay message from", sender.tab.id);
-      connections[tabId].postMessage(request);
-    } else {
-      console.log("Queue message from", sender.tab.id);
-      queue[sender.tab.id] = [request];
-    }
-  }
-  else if (request.id == "cljs-data-browser-2") {
-    const {id, tabId, payload} = request;
-    if (tabId && id === 'cljs-data-browser-2') {
-      console.log('Instantly relay message from', tabId);
-      browser.tabs.sendMessage(
-        tabId,
-        {message: payload}
-      );
-      
-    }
+  if (tabId in connections) {
+    console.log("Instantly relay message from", tabId);
+    connections[tabId].postMessage(request);
   }
 
   return true;

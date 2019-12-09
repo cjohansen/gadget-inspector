@@ -10,10 +10,16 @@
   (apply console.log args))
 
 (defmethod actions/exec-action :default [payload]
-   (let [msg #js {"id" "cljs-data-browser-2"
-                  "tabId" js/browser.devtools.inspectedWindow.tabId
-                  "payload" payload}]
-        (js/browser.runtime.sendMessage msg)))
+  (if (and (exists? js/chrome) js/chrome.tabs)
+    (js/chrome.tabs.query
+     #js {:active true :currentWindow true}
+     (fn [tabs]
+       (js/chrome.tabs.sendMessage (.-id (aget tabs 0)) payload)))
+    (-> (str "window.postMessage({id: \"cljs-data-browser-action\",message: "
+             (pr-str payload) "}, \"*\");")
+        js/browser.devtools.inspectedWindow.eval
+        (.then (fn [res])))))
+
 
 (set! js/window.receiveMessage
       (fn [message]
