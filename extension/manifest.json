@@ -8,6 +8,9 @@
     "scripts": ["background.js"],
     "persistent": true
   },
+  "icons": {
+    "48": "cljs.png"
+  },
   "permissions": [
     "activeTab",
     "file:///*",
