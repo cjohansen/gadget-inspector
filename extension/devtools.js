@@ -44,7 +44,7 @@ function setWindowSize(win) {
 }
 
 ua.devtools.panels.create(
-  "CLJS Data",
+  "Gadget",
   "",
   "panel.html",
   panel => {
