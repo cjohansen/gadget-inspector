@@ -1,8 +1,22 @@
-/*global chrome*/
+/*global browser, chrome*/
 
-const konsole = console;
+function getConsole() {
+  if (isChrome) {
+    try {
+      return chrome.extension.getBackgroundPage().console;
+    } catch (e) {
+      // Wadda you gonna do?
+    }
+  }
+
+  return console;
+}
+
 var panelWindow;
 var queued;
+const isChrome = typeof chrome !== 'undefined';
+const ua = isChrome ? chrome : browser;
+const konsole = getConsole();
 
 const debounce = (fn, delay) => {
   var timeout;
@@ -16,20 +30,20 @@ const debounce = (fn, delay) => {
   };
 };
 
-const backgroundPageConnection = browser.runtime.connect({
+const backgroundPageConnection = ua.runtime.connect({
   name: "devtools-page"
 });
 
 function setWindowSize(win) {
   backgroundPageConnection.postMessage({
-    tabId: browser.devtools.inspectedWindow.tabId,
+    tabId: ua.devtools.inspectedWindow.tabId,
     name: "resize",
     height: win.innerHeight,
     width: win.innerWidth
   });
 }
 
-browser.devtools.panels.create(
+ua.devtools.panels.create(
   "CLJS Data",
   "",
   "panel.html",
@@ -53,11 +67,11 @@ browser.devtools.panels.create(
 );
 
 backgroundPageConnection.postMessage({
-  tabId: browser.devtools.inspectedWindow.tabId,
+  tabId: ua.devtools.inspectedWindow.tabId,
   name: "init"
 });
 
-browser.devtools.network.onNavigated.addListener(url => {
+ua.devtools.network.onNavigated.addListener(url => {
   if (panelWindow) {
     panelWindow.receiveMessage({
       request: {

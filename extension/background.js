@@ -1,9 +1,9 @@
-/*global chrome*/
+/*global browser, chrome*/
 
 const connections = {};
-const queue = {};
+const ua = typeof chrome !== 'undefined' ? chrome : browser;
 
-browser.runtime.onConnect.addListener(port => {
+ua.runtime.onConnect.addListener(port => {
   const extensionListener = (message, sender, sendResponse) => {
     if (message.name == "init") {
       connections[message.tabId] = port;
@@ -32,8 +32,8 @@ browser.runtime.onConnect.addListener(port => {
   });
 });
 
-browser.runtime.onMessage.addListener((request, sender, sendResponse) => {
   if (sender.tab && request.id == "cljs-data-browser") {
+ua.runtime.onMessage.addListener((request, sender, sendResponse) => {
     const tabId = sender.tab.id;
 
     if (tabId in connections) {

@@ -1,6 +1,7 @@
-/*global chrome*/
+/*global browser, chrome*/
 
 const script = document.createElement("script");
+const ua = typeof chrome !== 'undefined' ? chrome : browser;
 
 script.textContent = `window.cljs_data_browser = message => {
   window.postMessage({
@@ -15,11 +16,15 @@ script.onload = () => script.parentNode.removeChild(script);
 
 window.addEventListener('message', event => {
   if (event.data.id === "cljs-data-browser") {
-    browser.runtime.sendMessage(event.data);
+    try {
+      ua.runtime.sendMessage(event.data);
+    } catch (e) {
+      console.warn("Failed to relay message", e);
+    }
   }
 });
 
-browser.runtime.onMessage.addListener((msg) => {
+ua.runtime.onMessage.addListener(msg => {
   window.postMessage({
     id: "cljs-data-browser-action",
     message: msg.message
