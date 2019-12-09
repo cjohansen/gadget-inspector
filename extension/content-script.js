@@ -29,7 +29,7 @@ window.addEventListener('message', event => {
     try {
       ua.runtime.sendMessage(event.data);
     } catch (e) {
-      console.warn("Failed to relay message", e);
+      console.log("Failed to relay message", e);
     }
   }
 });
