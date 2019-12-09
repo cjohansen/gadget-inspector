@@ -394,3 +394,6 @@
 (defn resume! []
   (reset! enabled? true)
   (render-inspector))
+
+(defmethod actions/exec-action :ping [store _ [k v]]
+  (render-inspector))

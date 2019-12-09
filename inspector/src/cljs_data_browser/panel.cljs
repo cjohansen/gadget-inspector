@@ -20,6 +20,7 @@
         js/browser.devtools.inspectedWindow.eval
         (.then (fn [res])))))
 
+(actions/exec-action "{:action :ping}")
 
 (set! js/window.receiveMessage
       (fn [message]
