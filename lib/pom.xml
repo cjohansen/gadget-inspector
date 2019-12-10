@@ -3,7 +3,7 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>cjohansen</groupId>
   <artifactId>gadget-inspector</artifactId>
-  <version>0.2019.12.09</version>
+  <version>0.2019.12.10</version>
   <name>gadget-inspector</name>
   <dependencies>
     <dependency>
@@ -15,6 +15,11 @@
       <groupId>org.clojure</groupId>
       <artifactId>clojurescript</artifactId>
       <version>1.10.439</version>
+    </dependency>
+    <dependency>
+      <groupId>org.clojure</groupId>
+      <artifactId>core.async</artifactId>
+      <version>0.6.532</version>
     </dependency>
   </dependencies>
   <build>
@@ -37,7 +42,7 @@
   <scm>
     <connection>scm:git:git://github.com/cjohansen/gadget-inspector.git</connection>
     <developerConnection>scm:git:ssh://git@github.com/cjohansen/gadget-inspector.git</developerConnection>
-    <tag>v0.2019.12.09</tag>
+    <tag>v0.2019.12.10</tag>
     <url>https://github.com/cjohansen/gadget-inspector</url>
   </scm>
 </project>
