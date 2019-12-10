@@ -1,6 +1,6 @@
 {
-  "name": "ClojureScript Data Browser",
-  "version": "1.0",
+  "name": "Gadget Inspector: ClojureScript Data Browser",
+  "version": "0.2019.12.10",
   "description": "Browse the contents of ClojureScript data, browse and restore historic atom states",
   "manifest_version": 2,
   "devtools_page": "devtools.html",
@@ -9,7 +9,11 @@
     "persistent": true
   },
   "icons": {
-    "48": "cljs.png"
+    "24": "icon-24.png",
+    "36": "icon-36.png",
+    "48": "icon-48.png",
+    "128": "icon-128.png",
+    "256": "icon-256.png"
   },
   "permissions": [
     "activeTab",
