@@ -33,7 +33,7 @@ remote-server: remote/static/assets/remote-inspector.js remote/static/assets/rem
 	cd remote && go run server.go
 
 lib/target:
-	mkdir target
+	mkdir lib/target
 
 lib/target/gadget-inspector.jar: lib/target lib/src/**/*.*
 	cd lib && clojure -A:jar
