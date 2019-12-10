@@ -1,0 +1,4 @@
+{:main gadget-demo.core
+ :optimizations :advanced
+ :output-to "target/gadget-demo.js"
+ :output-dir "target/out"}

@@ -1,0 +1,10 @@
+^{:watch-dirs ["src"]
+  :open-url false
+  :ring-server-options {:port 8007}}
+{:main gadget-demo.core
+ :optimizations :none
+ :pretty-print true
+ :source-map true
+ :asset-path "js-out"
+ :output-to "resources/public/gadget-demo.js"
+ :output-dir "resources/public/js-out"}

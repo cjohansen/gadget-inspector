@@ -5,3 +5,4 @@ figwheel-main.edn
 /extension/inspector.css
 lib/.nrepl-port
 remote/static
+demo/resources/public/js-out
