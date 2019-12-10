@@ -47,7 +47,14 @@ firefox.xpi: extension
 	jq -s '.[0] * .[1]' extension/manifest.json extension/firefox-manifest.json > target/firefox/manifest.json
 	cd target/firefox && zip ../firefox.xpi * && cd -
 
+demo/target/gadget-demo.js: demo/deps.edn demo/src/gadget_demo/* demo/resources/public/*
+	cd demo && clojure -A:dev:build
+
+target/demo: demo/target/gadget-demo.js
+	mkdir -p target/demo
+	cp demo/target/gadget-demo.js demo/resources/public/index.html ./target/demo/.
+
 clean:
-	rm -fr remote/static/assets inspector/target extension/panel.js extension/panel.js.map extension/inspector.css lib/target firefox.xpi
+	rm -fr remote/static/assets inspector/target extension/panel.js extension/panel.js.map extension/inspector.css lib/target firefox.xpi demo/target
 
 .PHONY: remote-inspector remote-server deploy clean
