@@ -16,7 +16,7 @@ never occur intentionally.
 You need the small agent library to expose data for inspection. It is available
 from Clojars:
 
-```sh
+```clj
 cjohansen/gadget-inspector {:mvn/version "0.2019.12.10"}
 ```
 
