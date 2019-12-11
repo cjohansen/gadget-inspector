@@ -35,7 +35,8 @@
               (try ;; The regex inference is pretty weak. If it can't be parsed,
                    ;; it's likely not a JWT
                 (parse-jwt v)
-                (catch :default e
+                (catch #?(:cljs :default
+                          :clj Exception) e
                   nil)))
      :jwt)))
 
