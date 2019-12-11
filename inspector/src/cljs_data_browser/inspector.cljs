@@ -103,7 +103,7 @@
    path])
 
 (q/defcomponent Tab [{:keys [text active? actions]}]
-  [:span {:style (merge {:padding "3px 12px 4px"
+  [:span {:style (merge {:padding "4px 12px"
                          :display "inline-block"}
                         (when active?
                           {:borderBottom "2px solid #2376ef"
