@@ -30,3 +30,8 @@
   (entries [s] (->> s
                     (take lazy-sample)
                     (map-indexed vector))))
+
+(extend-type #?(:cljs cljs.core/IndexedSeq
+                :clj clojure.lang.IndexedSeq)
+  Browsable
+  (entries [s] (map-indexed vector s)))
