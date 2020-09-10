@@ -1,5 +1,6 @@
 (ns gadget.datafy
   (:require [clojure.datafy :as datafy]
+            [gadget.browsable :as browsable]
             [gadget.std :refer [date?]]))
 
 (def type-fns (atom nil))
@@ -37,6 +38,9 @@
 
 (defn nav-in [data path]
   (if-let [p (first path)]
-    (let [data (datafy data)]
-      (recur (datafy/nav data p (get data p)) (rest path)))
+    (let [data (datafy data)
+          navigable (if (satisfies? browsable/Browsable data)
+                      (into {} (browsable/entries data))
+                      data)]
+      (recur (datafy/nav data p (get navigable p)) (rest path)))
     data))

@@ -1,5 +1,6 @@
 (ns gadget.extensions
-  (:require [gadget.datafy :as datafy]
+  (:require [gadget.browsable :as browsable]
+            [gadget.datafy :as datafy]
             [gadget.core :as gadget]
             [gadget.std :refer [pad]]
             [clojure.string :as str]))
@@ -15,7 +16,7 @@
   #?(:cljs (-> s js/atob JSON.parse (js->clj :keywordize-keys true))))
 
 (defrecord JWT [header data sig]
-  gadget/Browsable
+  browsable/Browsable
   (entries [jwt]
     (sort-by (gadget/key-order [:header :data :signature]) jwt)))
 
@@ -46,7 +47,7 @@
 (def date-key-order [:iso :locale-date-string :time :timezone :year :month :date :timestamp])
 
 (defrecord Instant [timestamp iso locale-date-string year month date time timezone]
-  gadget/Browsable
+  browsable/Browsable
   (entries [m]
     (sort-by (gadget/key-order date-key-order) m)))
 

@@ -3,6 +3,7 @@
             [clojure.string :as str]
             [gadget.datafy :as datafy]
             [gadget.actions :as actions]
+            [gadget.browsable :as browsable]
             [gadget.std :refer [debounce pad]]))
 
 (defmulti render-data identity)
@@ -68,9 +69,11 @@
 
 (defn prep-browser-entries [label path entries]
   (->> entries
-       (map (fn [[k v]]
-              (let [target-path (conj path k)]
-                {:k (render-with-view :inline label path (get bespoke-labels k k))
+       (map (fn [entry]
+              (let [[k v] entry
+                    target-path (conj path k)]
+                {:k (when-not (-> entry meta :synthetic-key?)
+                      (render-with-view :inline label path (get bespoke-labels k k)))
                  :v (render-with-view :inline label target-path v)
                  :actions (when-not (contains? bespoke-labels k)
                             {:go [[:assoc-state [label :path] target-path]]
@@ -95,31 +98,6 @@
                     :data (prep-browser-entries label path data)
                     :path (prepare-path (concat [label] path))
                     :actions {:copy [[:copy-to-clipboard label path]]}}])
-
-(defprotocol Browsable
-  :extend-via-metadata true
-  (entries [data] "Return a sorted seq of key value pairs for browsing"))
-
-(extend-type #?(:cljs cljs.core/PersistentVector
-                :clj clojure.lang.PersistentVector)
-  Browsable
-  (entries [m] (->> m (map-indexed vector) (sort-by first))))
-
-(extend-type #?(:cljs cljs.core/List
-                :clj clojure.lang.PersistentList)
-  Browsable
-  (entries [m] (->> m (map-indexed vector) (sort-by first))))
-
-(def lazy-sample 1000)
-
-;; TODO: Add action to navigate further
-(extend-type #?(:cljs cljs.core/LazySeq
-                :clj clojure.lang.LazySeq)
-  Browsable
-  (entries [s] (->> s
-                    (take lazy-sample)
-                    (map-indexed vector)
-                    (sort-by first))))
 
 (defmethod render [:inline :keyword] [_ {:keys [raw]}]
   [:gadget/keyword (pr-str raw)])
@@ -210,7 +188,8 @@
                (mapcat identity))}]))
 
 (defmethod render [:inline :seq] [_ {:keys [label path raw]}]
-  (let [selection (take lazy-sample raw)]
+  (let [lazy-sample browsable/lazy-sample
+        selection (take lazy-sample raw)]
     (cond
       (= (count selection) lazy-sample)
       [:gadget/link
@@ -235,7 +214,7 @@
 
       (= :full view)
       (->> (cond
-             (satisfies? Browsable (:data v)) (entries (:data v))
+             (satisfies? browsable/Browsable (:data v)) (browsable/entries (:data v))
 
              ;; Handle the map default here instead of implementing the Browsable
              ;; protocol for maps, because ClojureScript currently has a bug where you
