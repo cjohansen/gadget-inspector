@@ -1,17 +1,22 @@
 {:paths ["src"]
- :deps {org.clojure/clojure {:mvn/version "1.10.0-beta6"}
-        org.clojure/clojurescript {:mvn/version "1.10.439"}
-        cjohansen/dumdom {:mvn/version "2019.02.03-3"}}
- :aliases {:test {:extra-deps {lambdaisland/kaocha {:mvn/version "0.0-176"}}}
-           :build-panel {:main-opts ["-m" "cljs.main"
-                                     "-O" "advanced"
-                                     "-d" "target"
-                                     "-o" "target/panel.js"
-                                     "-co" "cljs.edn"
-                                     "-c" "cljs-data-browser.panel"]}
-           :build-remote-inspector {:main-opts ["-m" "cljs.main"
-                                                "-O" "advanced"
-                                                "-d" "target"
-                                                "-o" "target/remote-inspector.js"
-                                                "-co" "remote-cljs.edn"
-                                                "-c" "cljs-data-browser.remote-inspector"]}}}
+ :deps {org.clojure/clojure {:mvn/version "1.10.3"}
+        org.clojure/clojurescript {:mvn/version "1.10.893"}
+        cjohansen/dumdom {:mvn/version "2021.10.29"}}
+ :aliases
+ {:test {:extra-deps {lambdaisland/kaocha {:mvn/version "0.0-176"}}}
+  :build-panel
+  {:main-opts ["-m" "cljs.main"
+               "-O" "advanced"
+               "-d" "target"
+               "-o" "target/panel.js"
+               "-co" "cljs.edn"
+               "-c" "cljs-data-browser.panel"]}
+  :build-remote-inspector
+  {:main-opts ["-m" "cljs.main"
+               "-O" "advanced"
+               "-d" "target"
+               "-o" "target/remote-inspector.js"
+               "-co" "remote-cljs.edn"
+               "-c" "cljs-data-browser.remote-inspector"]}
+  :ancient {:extra-deps {olical/depot {:mvn/version "2.3.0"}}
+            :main-opts ["-m" "depot.outdated.main"]}}}

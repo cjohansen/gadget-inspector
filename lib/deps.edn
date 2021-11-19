@@ -1,15 +1,17 @@
 {:paths ["src"]
- :deps {org.clojure/core.async {:mvn/version "1.3.610"}
-        cheshire {:mvn/version "5.10.0"}
-        clj-http {:mvn/version "3.10.2"}}
+ :deps {org.clojure/core.async {:mvn/version "1.4.627"}
+        cheshire {:mvn/version "5.10.1"}
+        clj-http {:mvn/version "3.12.3"}}
  :aliases {:dev {:extra-paths ["dev" "test" "target" "resources" "../inspector/src"]
-                 :extra-deps {org.clojure/clojure {:mvn/version "1.10.1"}
-                              org.clojure/clojurescript {:mvn/version "1.10.520"}
-                              com.bhauman/figwheel-main {:mvn/version "0.2.11"}
-                              cjohansen/clj-event-source {:mvn/version "2019.11.29"}
-                              cjohansen/dumdom {:mvn/version "2020.07.04"}
+                 :extra-deps {org.clojure/clojure {:mvn/version "1.10.3"}
+                              org.clojure/clojurescript {:mvn/version "1.10.893"}
+                              com.bhauman/figwheel-main {:mvn/version "0.2.15"}
+                              cjohansen/clj-event-source {:mvn/version "2019.11.30"}
+                              cjohansen/dumdom {:mvn/version "2021.10.29"}
                               cljs-data-browser {:local/root "../inspector"}}}
            :test {:extra-deps {lambdaisland/kaocha {:mvn/version "0.0-418"}}}
            :jar {:extra-deps {pack/pack.alpha {:git/url "https://github.com/juxt/pack.alpha.git"
                                                :sha "f24279ca21dba3ba74a6f501cff0dbf630ce4355"}}
-                 :main-opts ["-m" "mach.pack.alpha.skinny" "--no-libs" "--project-path" "target/gadget-inspector.jar"]}}}
+                 :main-opts ["-m" "mach.pack.alpha.skinny" "--no-libs" "--project-path" "target/gadget-inspector.jar"]}
+           :ancient {:extra-deps {olical/depot {:mvn/version "2.3.0"}}
+                     :main-opts ["-m" "depot.outdated.main"]}}}
