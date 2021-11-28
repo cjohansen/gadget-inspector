@@ -15,7 +15,11 @@
   #?(:cljs (reader/read-string payload)
      :clj (read-string payload)))
 
-(def pending-action? (atom false))
+(def pending-action?
+  "This atom is used to bypass the debounce on render when processing actions from
+  the inspector UI. It should probably be removed in favor of `action` calling
+  on render without debouncing in a more direct fashion."
+  (atom false))
 
 (defn action [payload]
   (let [{:keys [action args]} (deserialize payload)]
