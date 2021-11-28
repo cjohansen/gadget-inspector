@@ -21,6 +21,7 @@
     (set? v) :set
     (symbol? v) :symbol
     (seq? v) :seq
+    (uuid? v) :uuid
     (date? v) :date
     :default :object))
 

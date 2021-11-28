@@ -134,6 +134,10 @@
   (let [[prefix str] (str/split (pr-str raw) #" ")]
     [:gadget/literal {:prefix prefix :str str}]))
 
+(defmethod render [:inline :uuid] [_ {:keys [raw]}]
+  (let [[prefix str] (str/split (pr-str raw) #" ")]
+    [:gadget/literal {:prefix prefix :str str}]))
+
 (def inline-length-limit 120)
 
 (defn- too-long-for-inline? [v]
