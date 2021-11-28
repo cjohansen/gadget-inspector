@@ -161,19 +161,19 @@
     [:gadget/inline-coll {:brackets ["#{" "}"]
                           :xs (->> raw
                                    sort-vals
-                                   (map #(render-with-view :inline label path %)))}]))
+                                   (map #(render-with-view :summary label path %)))}]))
 
 (defmethod render [:inline :vector] [_ {:keys [raw label path]}]
   (if (too-long-for-inline? raw)
     [:gadget/link [:gadget/code {} (summarize "[" raw "]")]]
     [:gadget/inline-coll {:brackets ["[" "]"]
-                          :xs (map #(render-with-view :inline label path %) raw)}]))
+                          :xs (map #(render-with-view :summary label path %) raw)}]))
 
 (defmethod render [:inline :list] [_ {:keys [raw label path]}]
   (if (too-long-for-inline? raw)
     [:gadget/link [:gadget/code {} (summarize "'(" raw ")")]]
     [:gadget/inline-coll {:brackets ["'(" ")"]
-                          :xs (map #(render-with-view :inline label path %) raw)}]))
+                          :xs (map #(render-with-view :summary label path %) raw)}]))
 
 (defmethod render [:inline :map] [_ {:keys [raw label path]}]
   (if (too-long-for-inline? raw)
@@ -212,36 +212,40 @@
        {:brackets ["(" ")"]
         :xs (->> raw
                  sort-vals
-                 (map-indexed #(render-with-view :inline label (conj path %1) %2)))}])))
+                 (map-indexed #(render-with-view :summary label (conj path %1) %2)))}])))
 
 (defmethod render :default [view v]
-  (let [t (datafy/symbolic-type (:data v))]
-    (cond
-      (not= t (:type v))
-      (render view (assoc v :type t))
+  (if (= :summary view)
+    (render :inline v)
+    (let [t (datafy/symbolic-type (:data v))]
+      (cond
+        (not= t (:type v))
+        (render view (assoc v :type t))
 
-      (= :full view)
-      (->> (cond
-             (satisfies? browsable/Browsable (:data v)) (browsable/entries (:data v))
+        (= :full view)
+        (->> (cond
+               (satisfies? browsable/Browsable (:data v))
+               (browsable/entries (:data v))
 
-             ;; Handle the map default here instead of implementing the Browsable
-             ;; protocol for maps, because ClojureScript currently has a bug where you
-             ;; cannot override a protocol implementation on a type from metadata. This
-             ;; way, you can implement Browsable from metadata, and have that
-             ;; implementation override this default behavior.
-             (map? (:data v))
-             (sort-keys (:data v))
+               ;; Handle the map default here instead of implementing the Browsable
+               ;; protocol for maps, because ClojureScript currently has a bug where you
+               ;; cannot override a protocol implementation on a type from metadata. This
+               ;; way, you can implement Browsable from metadata, and have that
+               ;; implementation override this default behavior.
+               (map? (:data v))
+               (sort-keys (:data v))
 
-             :default
-             [[:gadget/type (let [t (datafy/symbolic-type (:data v))]
-                              (if (= :object t)
-                                (constructor (:data v))
-                                t))]
-              [:gadget/value (:data v)]])
-           (browser-data (:label v) (:path v) (meta (:data v))))
+               :default
+               [[:gadget/type (let [t (datafy/symbolic-type (:data v))]
+                                (if (= :object t)
+                                  (constructor (:data v))
+                                  t))]
+                [:gadget/value (:data v)]])
 
-      :default
-      [:span {:style {:padding "6px"}} (pr-str (:raw v))])))
+             (browser-data (:label v) (:path v) (meta (:data v))))
+
+        :default
+        [:span {:style {:padding "6px"}} (pr-str (:raw v))]))))
 
 (def rendered (atom {:data nil :hiccup nil :meta nil}))
 
