@@ -119,7 +119,7 @@
   [:gadget/code {} "nil"])
 
 (defmethod render [:inline :symbol] [_ {:keys [raw]}]
-  [:gadget/code {} raw])
+  [:gadget/code {} (str raw)])
 
 (defn- constructor [v]
   (second (re-find #"function (.*)\(" (str (type v)))))
