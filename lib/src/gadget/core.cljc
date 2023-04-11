@@ -324,8 +324,8 @@
 (add-watch store :gadget/inspector (fn [_ _ _ _] (render-inspector)))
 
 (defn- atom? [ref]
-  (instance? #?(:cljs Atom
-                :clj clojure.lang.Atom) ref))
+  #?(:cljs (satisfies? IAtom ref)
+     :clj (instance? clojure.lang.IAtom ref)))
 
 (defn inspectable? [ref {:keys [inspectable?]}]
   (or (not (ifn? inspectable?))
