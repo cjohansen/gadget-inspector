@@ -245,7 +245,7 @@ As an example, let's consider how Gadget recognizes and navigates JWTs:
       :jwt)))
 
 (defn- base64json [s]
-  (-> s js/atob JSON.parse (js->clj :keywordize-keys true)))
+  (-> s js/atob js/JSON.parse (js->clj :keywordize-keys true)))
 
 (defmethod datafy/datafy :jwt [token]
   (let [[header data sig] (str/split token #"\.")]

@@ -13,7 +13,7 @@
    [:gadget/string (pr-str (str (first (str/split raw #"\.")) "..."))]])
 
 (defn- base64json [s]
-  #?(:cljs (-> s js/atob JSON.parse (js->clj :keywordize-keys true))))
+  #?(:cljs (-> s js/atob js/JSON.parse (js->clj :keywordize-keys true))))
 
 (defrecord JWT [header data sig]
   browsable/Browsable
