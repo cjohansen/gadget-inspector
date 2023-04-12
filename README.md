@@ -456,7 +456,7 @@ clojure -A:dev -m figwheel.main --build dev --repl
 
 The [lib/dev/gadget/dev.clj](dev namespace) provides some test data for you to
 play with. The REPL runs the inspector in a regular browser tab in
-[http://localhost:9570](http://localhost:9570).
+[http://localhost:9570](http://localhost:9500).
 
 ## License
 
