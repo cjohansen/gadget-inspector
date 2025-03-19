@@ -1,0 +1,254 @@
+.gadget-inspector {
+  --mine-shaft: #252525;
+  --limeade: #690;
+  --fresh-eggplant: #905;
+  --guardsman-rojo: #c80000;
+  --lavender-magenta: #ee7ae4;
+  --malibu: #86bdfa;
+  --razzmatazz: #ce0473;
+  --pistachio: #87c904;
+  --azul: #3424fb;
+  --mercury: #e6e6e6;
+  --gallery: #f0f0f0;
+  --wild-sand: #f5f5f5;
+  --selago: #ebf2fc;
+  --dusty: #999;
+  --silver: #ccc;
+  --dodger: #2376ef;
+
+  --string-color: var(--limeade);
+  --number-color: var(--fresh-eggplant);
+  --keyword-color: var(--guardsman-rojo);
+  --boolean-color: var(--azul);
+  --link-color: var(--azul);
+  --pill-bg: var(--gallery);
+  --pill-border: var(--mercury);
+  --zebra-bg: var(--wild-sand);
+  --zebra-hover: var(--selago);
+  --button-border-color: var(--dusty);
+  --button-bg: var(--wild-sand);
+  --button-hover-bg: var(--mercury);
+  --navbar-border: var(--silver);
+  --toolbar-bg: var(--wild-sand);
+  --active-tab-border: var(--dodger);
+  --tab-hover-bg: var(--mercury);
+  --code-bg: var(--wild-sand);
+
+  font-size: 14px;
+}
+
+.gadget-inspector .dark,
+.gadget-inspector.dark {
+  background: #18181a;
+  color: var(--mercury);
+  --string-color: var(--pistachio);
+  --number-color: var(--razzmatazz);
+  --keyword-color: var(--malibu);
+  --boolean-color: var(--lavender-magenta);
+  --link-color: var(--malibu);
+  --pill-bg: var(--mine-shaft);
+  --pill-border: #363636;
+  --zebra-bg: var(--mine-shaft);
+  --zebra-hover: #334;
+  --button-border-color: #666;
+  --button-bg: #363636;
+  --button-hover-bg: var(--mine-shaft);
+  --navbar-border: #666;
+  --a-color: var(--dusty);
+  --toolbar-bg: #363636;
+  --tab-hover-bg: var(--mine-shaft);
+  --tab-fg: var(--gallery);
+  --code-bg: var(--mine-shaft);
+}
+
+.gadget-inspector {font-family: helvetica neue, lucida grande, sans-serif;}
+.gadget-inspector code {font-family: menlo, lucida console, monospace;}
+.gadget-inspector .string {color: var(--string-color);}
+.gadget-inspector .number {color: var(--number-color);}
+.gadget-inspector .keyword {color: var(--keyword-color);}
+.gadget-inspector .boolean {color: var(--boolean-color); font-weight: bold;}
+.gadget-inspector .core-fn {color: var(--boolean-color); font-weight: bold;}
+
+body.gadget-inspector,
+.gadget-inspector pre {
+  padding: 0;
+  margin: 0;
+  background: #fff;
+}
+
+.gadget-inspector a {
+  color: var(--a-color);
+  text-decoration: underline;
+}
+
+.gadget-inspector .link {color: var(--link-color);}
+
+.gadget-inspector a, .gadget-inspector .clickable {
+  cursor: pointer;
+}
+
+.gadget-inspector a:hover {
+  text-decoration: none;
+  --pill-bg: var(--mercury);
+}
+
+.dark a:hover {
+  --pill-bg: #363636;
+}
+
+.gadget-inspector .tuple-item {
+  display: inline-block;
+  padding: 0 4px;
+}
+
+.gadget-inspector .tuple-item + .tuple-item {
+  margin-left: 8px;
+}
+
+.gadget-inspector .pill {
+  background: var(--pill-bg);
+  bottom: -2px;
+  border-radius: 4px;
+  border: 1px solid var(--pill-border);
+  display: inline-block;
+  margin: 0 0 2px;
+  padding: 2px 6px;
+  position: relative;
+  transition: background 0.15s;
+}
+
+.gadget-inspector .pill-ph {
+  border: 1px solid transparent;
+  background: none;
+  padding-left: 0;
+}
+
+.gadget-inspector .pill + .pill {margin-left: 8px}
+
+.gadget-inspector .button {
+  background: var(--button-bg);
+  border: 1px solid var(--button-border-color);
+  border-radius: 4px;
+  cursor: pointer;
+  padding: 2px 6px;
+  text-decoration: none;
+  transition: background 0.15s;
+}
+
+.gadget-inspector .button:hover {
+  background: var(--button-hover-bg);
+}
+
+.gadget-inspector .table {
+  border-collapse: collapse;
+  width: 100%;
+}
+
+.gadget-inspector .table th {
+  font-weight: normal;
+  padding: 5px 12px;
+  text-align: left;
+  white-space: nowrap;
+}
+
+.gadget-inspector .table td {
+  padding: 5px;
+  width: 100%;
+  position: relative;
+}
+
+.gadget-inspector .table tbody > tr:nth-child(2n + 1) > td,
+.gadget-inspector .table tbody > tr:nth-child(2n + 1) > th {
+  background: var(--zebra-bg);
+}
+
+.gadget-inspector .table tbody > tr:hover > td,
+.gadget-inspector .table tbody > tr:hover > th {
+  background: var(--zebra-hover);
+}
+
+.gadget-inspector .flex {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.gadget-inspector .table .button {
+  opacity: 0;
+}
+
+.gadget-inspector .table tr:hover > td .button {
+  opacity: 1;
+}
+
+.gadget-inspector .hl {
+  margin: 0;
+  padding: 0;
+}
+
+.gadget-inspector .hl li {
+  display: inline;
+  list-style-type: none;
+  margin: 0;
+}
+
+.gadget-inspector .hl li + li {
+  margin-left: 8px;
+}
+
+.gadget-inspector .navbar {
+  border-bottom: 1px solid var(--navbar-border);
+  padding: 10px 0;
+}
+
+.gadget-inspector .toolbar {
+  background: var(--toolbar-bg);
+  border-bottom: 1px solid var(--navbar-border);
+  display: flex;
+}
+
+.gadget-inspector .toolbar a {
+  text-decoration: none;
+}
+
+.gadget-inspector .tab {
+  color: var(--tab-fg);
+  padding: 6px 12px;
+}
+
+.gadget-inspector .tab:hover {
+  background: var(--tab-hover-bg);
+}
+
+.gadget-inspector .tab-selected:hover {
+  background: var(--toolbar-bg);
+  cursor: default;
+}
+
+.gadget-inspector .tab-selected {
+  padding-bottom: 5px;
+  margin-bottom: -1px;
+  border-bottom: 2px solid var(--active-tab-border);
+}
+
+.gadget-inspector .h1,
+.gadget-inspector .h2,
+.gadget-inspector .h3,
+.gadget-inspector .h4,
+.gadget-inspector .h5,
+.gadget-inspector .p {
+  margin: 20px;
+}
+
+.gadget-inspector .p {
+  font-size: 16px;
+}
+
+.gadget-inspector .code {
+  background: var(--code-bg);
+  padding: 20px;
+}
+
+.gadget-inspector .center {
+  text-align: center;
+}

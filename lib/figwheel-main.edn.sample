@@ -1,4 +1,2 @@
-{:watch-dirs ["src" "dev" "../inspector/src"]
- :open-file-command "emacsclient"
- :ring-server-options {:port 9570}
+{:open-file-command "emacsclient"
  :open-url false}

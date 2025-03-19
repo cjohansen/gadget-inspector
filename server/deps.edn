@@ -1,0 +1,17 @@
+{:paths ["src" "resources"]
+ :deps {org.clojure/clojure {:mvn/version "1.10.1"}
+        org.clojure/core.async {:mvn/version "0.5.527"}
+        org.clojure/core.match {:mvn/version "0.3.0"}
+        ring {:mvn/version "1.8.0"}
+        com.taoensso/timbre {:mvn/version "4.10.0"}}
+ :aliases {:dev {:extra-paths ["dev"]
+                 :extra-deps {org.clojure/tools.namespace {:mvn/version "0.3.0-alpha4"}}}
+           :test {:extra-paths ["test"]
+                  :extra-deps {lambdaisland/kaocha
+                               {:mvn/version "0.0-554"}
+                               kaocha-noyoda {:mvn/version "2019-06-03"}}}
+           :ancient {:extra-deps {olical/depot {:mvn/version "1.8.4"}}
+                     :main-opts ["-m" "depot.outdated.main"]}
+           :jar {:extra-deps {pack/pack.alpha {:git/url "https://github.com/juxt/pack.alpha.git"
+                                               :sha "042c61410b1851957ae5f77cfe26a255837172cc"}}
+                 :main-opts ["-m" "mach.pack.alpha.skinny" "--no-libs" "--project-path" "target/gadget_server.jar"]}}}

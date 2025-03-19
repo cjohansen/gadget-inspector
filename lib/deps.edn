@@ -8,7 +8,10 @@
                               com.bhauman/figwheel-main {:mvn/version "0.2.15"}
                               cjohansen/clj-event-source {:mvn/version "2019.11.30"}
                               cjohansen/dumdom {:mvn/version "2021.10.29"}
-                              cljs-data-browser {:local/root "../inspector"}}}
+                              cljs-data-browser {:local/root "../inspector"}
+                              datascript/datascript {:mvn/version "1.2.10"}
+                              devcards/devcards {:mvn/version "0.2.6"}
+                              net.clojars.cjohansen/dumdom-devcards {:mvn/version "2021.06.14"}}}
            :test {:extra-deps {lambdaisland/kaocha {:mvn/version "0.0-418"}}}
            :jar {:extra-deps {pack/pack.alpha {:git/url "https://github.com/juxt/pack.alpha.git"
                                                :sha "f24279ca21dba3ba74a6f501cff0dbf630ce4355"}}

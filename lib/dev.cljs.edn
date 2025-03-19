@@ -1,4 +1,12 @@
+^{:watch-dirs ["src" "dev" "../inspector/src"]
+  :extra-main-files {:devcards {:main gadget.devcards}}
+  :ring-server-options {:port 9570}
+  :css-dirs ["resources/public/css"]}
 {:main gadget.dev
  :optimizations :none
  :pretty-print true
- :source-map true}
+ :source-map true
+ :devcards true
+ :asset-path "/js/compiled/out"
+ :output-to "resources/public/js/compiled/app.js"
+ :output-dir "resources/public/js/compiled/out"}

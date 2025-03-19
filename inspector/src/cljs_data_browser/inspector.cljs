@@ -123,7 +123,7 @@
 
 (q/defcomponent Browser
   :keyfn :key
-  [{:keys [metadata data path actions]}]
+  [{:keys [data path actions]}]
   [:div
    [:div {:style {:display "flex"
                   :justifyContent "space-between"
@@ -135,6 +135,10 @@
                     :width "100%"}}
     [:tbody {} (map Entry data)]]])
 
+(q/defcomponent Transaction [details]
+  [:div {:style {:background "#fff"}}
+   details])
+
 (q/defcomponent TxList
   :keyfn :key
   [txes]
@@ -142,10 +146,13 @@
                    :width "100%"}}
    [:tbody {}
     (map #(d/tr {}
-            (d/td {:style {:padding "5px 5px 5px 12px"
-                           :whiteSpace "nowrap"
+            (d/td {:style {:whiteSpace "nowrap"
                            :width "100%"}}
-              %)) txes)]])
+              [:div {:style {:padding "5px 5px 5px 12px"}
+                     :onClick (action-fn (:actions %))}
+               (:summary %)]
+              (when-let [details (:details %)]
+                [Transaction details]))) txes)]])
 
 (def component-map
   {:gadget/button Button

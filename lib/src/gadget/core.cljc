@@ -140,16 +140,18 @@
 
 (def inline-length-limit 120)
 
-(defn- too-long-for-inline? [v]
+(defn too-long-for-inline? [v]
   (< inline-length-limit
      (count (pr-str v))))
 
 (defn- inflect [n w]
   (if (= n 1)
     w
-    (str w "s")))
+    (if (str/ends-with? w "y")
+      (str (str/join (drop-last 1 w)) "ies")
+      (str w "s"))))
 
-(defn- summarize [pre c post & [w]]
+(defn summarize [pre c post & [w]]
   (let [num (count c)
         types (into #{} (map datafy/synthetic-type c))
         w (or w (if (= 1 (count types)) (name (first types)) "item"))]
@@ -261,30 +263,43 @@
         (reset! rendered {:data data :hiccup hiccup :meta (meta data)})
         hiccup))))
 
-(defn tx-summary [tx]
-  (some->> (:gadget.tx/data tx)
-           (render-with-view :inline "tx" [])))
 
 (defn same-date? [a b]
   (and (= (.getYear a) (.getYear b))
        (= (.getMonth a) (.getMonth b))
        (= (.getDate a) (.getDate b))))
 
-(defn tx-hiccup [txes]
+(defn tx-hiccup [{:keys [label txes tx-expand]}]
   (let [now #?(:cljs (js/Date.)
-               :clj (java.util.Date.))]
+               :clj (java.util.Date.))
+        expanded (set tx-expand)]
     [:gadget/tx-list
-     (map #(let [{:gadget.tx/keys [instant]} %]
-             [:div {}
-              [:strong {}
-               (when-not (same-date? instant now)
-                 (str (+ 1900 (.getYear instant)) "-"
-                      (pad (inc (.getMonth instant))) "-"
-                      (pad (.getDate instant)) " "))
-               (str (pad (.getHours instant)) ":"
-                    (pad (.getMinutes instant)) ":"
-                    (pad (.getSeconds instant)) " ")]
-              (tx-summary %)])
+     (map #(let [{:gadget.tx/keys [instant]} %
+                 expanded? (contains? expanded (:gadget.tx/id %))]
+             {:summary
+              [:div {}
+               [:strong {}
+                (when-not (same-date? instant now)
+                  (str (+ 1900 (.getYear instant)) "-"
+                       (pad (inc (.getMonth instant))) "-"
+                       (pad (.getDate instant)) " "))
+                (str (pad (.getHours instant)) ":"
+                     (pad (.getMinutes instant)) ":"
+                     (pad (.getSeconds instant)) " ")]
+               (some->> (:gadget.tx/data %)
+                        (render-with-view :inline "tx" []))]
+              :actions [[:assoc-state [label :tx-expand] (if expanded?
+                                                           (remove #{(:gadget.tx/id %)} expanded)
+                                                           (conj expanded (:gadget.tx/id %)))]]
+              :details (when expanded?
+                         #_(browser-hiccup "Transaction data" [(:gadget.tx/id %)] % %)
+                         [:gadget/browser
+                          {:key (str "tx-browser")
+                           ;;:metadata (prep-browser-entries label path metadata)
+                           :data (prep-browser-entries "TX" [] (sort-keys %))
+                           :path (prepare-path (concat ["TX"] []))
+                           :actions {:copy [[:copy-to-clipboard "TX" []]]}}])
+              })
           txes)]))
 
 (defn prepare-data [window {:keys [label path ref data txes] :as state}]
@@ -293,17 +308,24 @@
         current-tab (when expanded? (get state :current-tab :browser))]
     {:tabs (concat
             [{:text (if expanded? [:strong label] label)
-              :actions [[:assoc-state [label :expanded?] (not expanded?)]]}
-             {:text "Browse"
-              :active? (= :browser current-tab)
-              :actions [[:assoc-state [label :current-tab] :browser]]}]
-            (when ref
+              :actions [[:assoc-state [label :expanded?] (not expanded?)]]}]
+            (when expanded?
+              [{:text "Browse"
+                :active? (= :browser current-tab)
+                :actions [[:assoc-state [label :current-tab] :browser]]}])
+            (when (and expanded? ref ;;false
+                       )
               [{:text "Transactions"
                 :actions [[:assoc-state [label :current-tab] :txes]]
-                :active? (= current-tab :txes)}]))
+                :active? (= current-tab :txes)}])
+            [{:text "Close"
+              :actions [[:uninspect label]]}]
+            (when ref
+              [{:text "Unsubscribe"
+                :actions [[:unsubscribe label]]}]))
      :hiccup (when expanded?
                (if (= :txes current-tab)
-                 (tx-hiccup txes)
+                 (tx-hiccup state)
                  (browser-hiccup label path raw (datafy/datafy raw))))}))
 
 (defn prepare [state]
@@ -314,7 +336,7 @@
 (defn render-data-now [f]
   (render-data f))
 
-(def render-data-debounced (atom (debounce render-data-now 250)))
+(def render-data-debounced (atom (debounce #'render-data-now 250)))
 
 (defn set-render-debounce-ms! [ms]
   (reset!
@@ -348,26 +370,32 @@
      :clj (java.util.Date.)))
 
 (defn create-tx [label old-state new-state]
-  (let [prev-tx-data (get-in @store [:data label :gadget.tx/data])
-        limit (get-in @store [:config label :tx-limit] 100)
+  (let [limit (get-in @store [:config label :tx-limit] 100)
         tx-data (:gadget.tx/data new-state)
-        valid-tx? (not= prev-tx-data tx-data)
+        valid-tx? (not= tx-data (:gadget.tx/data old-state))
         tx (cond-> {:gadget.tx/instant (now)
-                    :gadget.tx/state new-state}
+                    :gadget.tx/state new-state
+                    :gadget.tx/id (get-in @store [:data label :tx-count] 0)}
              valid-tx? (assoc :gadget.tx/data tx-data))]
-    (swap! store update-in [:data label] update :txes #(take limit (conj % tx)))))
+    (swap! store update-in [:data label] (fn [d]
+                                           (-> d
+                                               (update :tx-count inc)
+                                               (update :txes #(take limit (conj % tx))))))))
 
 (defn inspect [label ref & [opts]]
   (when (atom? ref)
     (add-watch ref :gadget/inspector (fn [_ _ old-state new-state]
                                        (create-tx label old-state new-state)
                                        (when (inspectable? new-state opts)
-                                         (render-inspector)))))
+                                         (render-inspector))))
+    (swap! store assoc-in [:refs label] ref))
+
   (when (atom? ref)
     (create-tx label nil @ref))
+
   (when (inspectable? ref opts)
     (swap! store update :data assoc label (merge
-                                           {:path [] :label label}
+                                           {:path [] :label label :tx-count 0}
                                            (get-in @store [:data label])
                                            (if (atom? ref)
                                              {:ref ref}
